@@ -99,7 +99,7 @@ func main() {
 	}
 
 	files = commandLineFiles(flag.Args())
-	err = uploadBinaries(files, uploadUrl)
+	err = uploadBinaries(files, uploadUrl, ctx, client, release, info)
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(-1)
@@ -359,6 +359,32 @@ func deleteTag(client *http.Client, info *buildEventInfo) error {
 	return nil
 }
 
-func uploadBinaries(filenames []string, uploadUrl string) error {
+func uploadBinaries(filenames []string, uploadUrl string, context *context.Context, client *github.Client,
+	release *github.RepositoryRelease, info *buildEventInfo) error {
+	for _, filename := range filenames {
+		file, err := os.Open(filename)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		var options github.UploadOptions
+		options.Name = filepath.Base(filename)
+
+		_, response, err := client.Repositories.UploadReleaseAsset(ctx, info.owner, info.repo, release.GetID(), file)
+		if err != nil {
+			return err
+		}
+
+		if response != nil {
+			defer response.Body.Close()
+		}
+
+		err = checkResponse(response)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
