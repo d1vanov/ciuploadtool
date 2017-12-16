@@ -37,9 +37,9 @@ and upload the specified binaries there.
     - go run ciuploadtool.go out/*
 
     branches:
-        except:
-            - # Do not build tags that we create when we upload to GitHub Releases
-            - /^(?i:continuous)$/
+      except:
+        - # Do not build tags that we create when we upload to GitHub Releases
+        - /^(?i:continuous)$/
     ```
 
 - On AppVeyor CI, go to the settings of your project at `https://ci.appveyor.com/project/yourusername/yourrepository/settings`
@@ -51,9 +51,14 @@ and upload the specified binaries there.
     - curl -fsSL https://github.com/d1vanov/ciuploadtool/raw/master/ciuploadtool.go -o ciuploadtool.go
     - go run ciuploadtool.go out\*
 
+    deploy:
+      provider: GitHub
+      auth_token:
+        secure: <your encrypted token> # your encrypted token from GitHub
+
     branches:
-        except:
-            - # Do not build tags that we create when we upload to GitHub Releases
-            - /^(?i:continuous)$/
+      except:
+        - # Do not build tags that we create when we upload to GitHub Releases
+        - /^(?i:continuous)$/
     ```
 
