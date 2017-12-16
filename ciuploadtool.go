@@ -59,7 +59,7 @@ func main() {
 	}
 
 	releaseExists := false
-	releaseId, uploadUrl, releaseUrl, targetCommitSha, err := getReleaseInfo(release)
+	targetCommitSha, err := getReleaseTargetCommitSha(release)
 	if err == nil {
 		releaseExists = true
 		if info.commit != targetCommitSha {
@@ -92,7 +92,7 @@ func main() {
 			os.Exit(-1)
 		}
 
-		releaseId, uploadUrl, releaseUrl, targetCommitSha, err = getReleaseInfo(release)
+		targetCommitSha, err = getReleaseTargetCommitSha(release)
 		if err != nil {
 			fmt.Print(err)
 			os.Exit(-1)
@@ -100,7 +100,7 @@ func main() {
 	}
 
 	files := commandLineFiles(flag.Args())
-	err = uploadBinaries(files, uploadUrl, ctx, client, release, info)
+	err = uploadBinaries(files, ctx, client, release, info)
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(-1)
@@ -214,9 +214,9 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 		osName = runtime.GOOS
 	}
 
-	if pSuffix == nil || *pSuffix == tag {
-		info.releaseTagName = tag
-		info.releaseTitle = "Release build (" + tag + ")"
+	if pSuffix == nil || *pSuffix == info.tag {
+		info.releaseTagName = info.tag
+		info.releaseTitle = "Release build (" + info.tag + ")"
 	} else if pSuffix != nil {
 		suffix := osName + "-" + *pSuffix
 		info.releaseTagName = "continuous-" + suffix
@@ -247,27 +247,9 @@ func checkResponse(response *github.Response) error {
 	return nil
 }
 
-func getReleaseInfo(release *github.RepositoryRelease) (id int, uploadUrl, releaseUrl, targetCommitSha string, err error) {
+func getReleaseTargetCommitSha(release *github.RepositoryRelease) (targetCommitSha string, err error) {
 	if release == nil {
 		err = fmt.Errorf("Release is nil")
-		return
-	}
-
-	if release.ID == nil {
-		err = fmt.Errorf("Release's ID is nil")
-		return
-	}
-	id = release.GetID()
-
-	uploadUrl = release.GetUploadURL()
-	if uploadUrl == "" {
-		err = fmt.Errorf("Release's upload URL is empty")
-		return
-	}
-
-	releaseUrl = release.GetURL()
-	if releaseUrl == "" {
-		err = fmt.Errorf("Release's URL is empty")
 		return
 	}
 
@@ -280,7 +262,7 @@ func getReleaseInfo(release *github.RepositoryRelease) (id int, uploadUrl, relea
 	return
 }
 
-func deleteRelease(ctx *context.Context, client *github.Client, info *buildEventInfo, release *github.RepositoryRelease) error {
+func deleteRelease(ctx context.Context, client *github.Client, info *buildEventInfo, release *github.RepositoryRelease) error {
 	response, err := client.Repositories.DeleteRelease(ctx, info.owner, info.repo, release.GetID())
 	if err != nil {
 		return err
@@ -298,7 +280,7 @@ func deleteRelease(ctx *context.Context, client *github.Client, info *buildEvent
 	return nil
 }
 
-func createRelease(ctx *context.Context, client *github.Client, info *buildEventInfo, pReleaseBody *string) (*github.RepositoryRelease, error) {
+func createRelease(ctx context.Context, client *github.Client, info *buildEventInfo, pReleaseBody *string) (*github.RepositoryRelease, error) {
 	release := new(github.RepositoryRelease)
 	release.TagName = new(string)
 	*release.TagName = info.releaseTagName
@@ -320,7 +302,7 @@ func createRelease(ctx *context.Context, client *github.Client, info *buildEvent
 
 	release, response, err := client.Repositories.CreateRelease(ctx, info.owner, info.repo, release)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if response != nil {
@@ -329,16 +311,16 @@ func createRelease(ctx *context.Context, client *github.Client, info *buildEvent
 
 	err = checkResponse(response)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil, nil
+	return release, nil
 }
 
 func deleteTag(client *http.Client, info *buildEventInfo) error {
 	// GitHub guys haven't really created any actual API for tag deletion so need to do it the hard way
-	deleteUrl = "https://api.github.com/repos/" + info.owner + "/" + info.repo + "/git/refs/tags/" + info.releaseTagName
-	req, err := client.NewRequest("DELETE", deleteUrl)
+	deleteUrl := "https://api.github.com/repos/" + info.owner + "/" + info.repo + "/git/refs/tags/" + info.releaseTagName
+	request, err := http.NewRequest("DELETE", deleteUrl, nil)
 	if err != nil {
 		return err
 	}
@@ -352,15 +334,14 @@ func deleteTag(client *http.Client, info *buildEventInfo) error {
 		defer response.Body.Close()
 	}
 
-	err = checkResponse(response)
-	if err != nil {
-		return err
+	if response.StatusCode != 200 {
+		return fmt.Errorf("Failed to fetch response to tag deletion: status code = %d: %s", response.StatusCode, response.Status)
 	}
 
 	return nil
 }
 
-func uploadBinaries(filenames []string, uploadUrl string, context *context.Context, client *github.Client,
+func uploadBinaries(filenames []string, ctx context.Context, client *github.Client,
 	release *github.RepositoryRelease, info *buildEventInfo) error {
 	for _, filename := range filenames {
 		file, err := os.Open(filename)
@@ -372,7 +353,7 @@ func uploadBinaries(filenames []string, uploadUrl string, context *context.Conte
 		var options github.UploadOptions
 		options.Name = filepath.Base(filename)
 
-		_, response, err := client.Repositories.UploadReleaseAsset(ctx, info.owner, info.repo, release.GetID(), file)
+		_, response, err := client.Repositories.UploadReleaseAsset(ctx, info.owner, info.repo, release.GetID(), &options, file)
 		if err != nil {
 			return err
 		}
