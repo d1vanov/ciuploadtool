@@ -150,21 +150,21 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 		return nil, nil
 	}
 
+	var info buildEventInfo
+
 	// Get GitHub API token from the environment variable
-	var token string
 	if isAppVeyor {
-		token = os.Getenv("auth_token")
+		info.token = os.Getenv("auth_token")
 	} else {
-		token = os.Getenv("GITHUB_TOKEN")
+		info.token = os.Getenv("GITHUB_TOKEN")
 	}
 
-	if token == "" {
+	if info.token == "" {
 		return nil, errors.New("No GitHub access token, can't proceed")
 	}
 
 	// Get various build information from environment variables
 	// specific to Travis CI and AppVeyor CI
-	var info buildEventInfo
 	info.isTravisCi = isTravisCi
 
 	repoSlug := ""
