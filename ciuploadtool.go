@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
-	"http"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
