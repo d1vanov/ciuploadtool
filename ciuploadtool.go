@@ -35,14 +35,14 @@ func main() {
 	}
 
 	// Setup GitHub client
-	ctx = context.Background()
+	ctx := context.Background()
 	tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: info.token})
 	tokenizedClient := oauth2.NewClient(ctx, tokenSource)
 
 	client := github.NewClient(tokenizedClient)
 
 	// Fetch release info
-	release, response, err := client.Repositories.GetReleaseByTag(ctx, owner, repo, releaseName)
+	release, response, err := client.Repositories.GetReleaseByTag(ctx, info.owner, info.repo, info.releaseTagName)
 	if err != nil {
 		fmt.Printf("Failed to request release information: %v", err)
 		os.Exit(-1)
@@ -86,7 +86,7 @@ func main() {
 	}
 
 	if !releaseExists {
-		release, err = createRelease(client, info, pReleaseBody)
+		release, err = createRelease(ctx, client, info, pReleaseBody)
 		if err != nil {
 			fmt.Print(err)
 			os.Exit(-1)
@@ -99,7 +99,7 @@ func main() {
 		}
 	}
 
-	files = commandLineFiles(flag.Args())
+	files := commandLineFiles(flag.Args())
 	err = uploadBinaries(files, uploadUrl, ctx, client, release, info)
 	if err != nil {
 		fmt.Print(err)
