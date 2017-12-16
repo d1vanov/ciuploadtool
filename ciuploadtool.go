@@ -344,8 +344,32 @@ func deleteTag(client *http.Client, info *buildEventInfo) error {
 	return nil
 }
 
+func getExistingReleaseAssets(ctx context.Context, client *github.Client,
+	release *github.RepositoryRelease, info *buildEventInfo) ([]*github.ReleaseAsset, error) {
+	existingAssets, response, err := client.Repositories.ListReleaseAssets(ctx, info.owner, info.repo, release.GetID(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if response != nil {
+		defer response.Body.Close()
+	}
+
+	err = checkResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return existingAssets, nil
+}
+
 func uploadBinaries(filenames []string, ctx context.Context, client *github.Client,
 	release *github.RepositoryRelease, info *buildEventInfo) error {
+	existingAssets, err := getExistingReleaseAssets(ctx, client, release, info)
+	if err != nil {
+		return err
+	}
+
 	for _, filename := range filenames {
 		file, err := os.Open(filename)
 		if err != nil {
@@ -364,12 +388,42 @@ func uploadBinaries(filenames []string, ctx context.Context, client *github.Clie
 			continue
 		}
 
-		fmt.Printf("Trying to upload file: %s\n", filename)
-
 		var options github.UploadOptions
 		options.Name = filepath.Base(filename)
 
-		_, response, err := client.Repositories.UploadReleaseAsset(ctx, info.owner, info.repo, release.GetID(), &options, file)
+		for i, existingAsset := range existingAssets {
+			if existingAsset == nil {
+				continue
+			}
+			if existingAsset.ID == nil {
+				continue
+			}
+			if existingAsset.Name == nil {
+				continue
+			}
+			if *existingAsset.Name == options.Name {
+				fmt.Printf("Found duplicate release asset %s, deleting it\n", options.Name)
+				response, err := client.Repositories.DeleteReleaseAsset(ctx, info.owner, info.repo, existingAsset.GetID())
+				if err != nil {
+					return err
+				}
+
+				if response != nil {
+					defer response.Body.Close()
+				}
+
+				err = checkResponse(response)
+				if err != nil {
+					return fmt.Errorf("Bad response on attempt to delete the stale release asset: %v", err)
+				}
+
+				existingAssets = append(existingAssets[:i], existingAssets[i+1:]...)
+			}
+		}
+
+		fmt.Printf("Trying to upload file: %s\n", filename)
+
+		asset, response, err := client.Repositories.UploadReleaseAsset(ctx, info.owner, info.repo, release.GetID(), &options, file)
 		if err != nil {
 			return err
 		}
@@ -382,6 +436,8 @@ func uploadBinaries(filenames []string, ctx context.Context, client *github.Clie
 		if err != nil {
 			return fmt.Errorf("Bad response on attempt to upload release asset: %v", err)
 		}
+
+		existingAssets = append(existingAssets, asset)
 	}
 
 	return nil
