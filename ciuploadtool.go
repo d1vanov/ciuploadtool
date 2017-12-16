@@ -241,7 +241,7 @@ func checkResponse(response *github.Response) error {
 		return errors.New("No HTTP response")
 	}
 
-	if response.Response.StatusCode != 200 {
+	if response.Response.StatusCode < 200 || response.Response.StatusCode > 299 {
 		return fmt.Errorf("Bad status code %d: %s\n", response.Response.StatusCode, response.Response.Status)
 	}
 
@@ -378,8 +378,9 @@ func uploadBinaries(filenames []string, ctx context.Context, client *github.Clie
 			defer response.Body.Close()
 		}
 
-		if response.StatusCode != 201 {
-			return fmt.Errorf("Bad response code on attempt to upload release asset: expected 201, got %d", response.StatusCode)
+		err = checkResponse(response)
+		if err != nil {
+			return fmt.Errorf("Bad response on attempt to upload release asset: %v", err)
 		}
 	}
 
