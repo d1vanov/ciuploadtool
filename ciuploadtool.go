@@ -238,11 +238,11 @@ func checkResponse(response *github.Response) error {
 	}
 
 	if response.Response == nil {
-		return errors.New("Failed to fetch tag information: no HTTP response")
+		return errors.New("No HTTP response")
 	}
 
 	if response.Response.StatusCode != 200 {
-		return fmt.Errorf("Failed to fetch tag information: bad status code %d: %s\n", response.Response.StatusCode, response.Response.Status)
+		return fmt.Errorf("Bad status code %d: %s\n", response.Response.StatusCode, response.Response.Status)
 	}
 
 	return nil
@@ -275,7 +275,7 @@ func deleteRelease(ctx context.Context, client *github.Client, info *buildEventI
 
 	err = checkResponse(response)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to delete release: %v", err)
 	}
 
 	return nil
@@ -312,7 +312,7 @@ func createRelease(ctx context.Context, client *github.Client, info *buildEventI
 
 	err = checkResponse(response)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to create release: %v", err)
 	}
 
 	return release, nil
