@@ -171,7 +171,7 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 	repoSlug := ""
 
 	if isAppVeyor {
-		fmt.Println("Running on Travis CI")
+		fmt.Println("Running on AppVeyor CI")
 		info.branch = os.Getenv("APPVEYOR_REPO_BRANCH")
 		info.tag = os.Getenv("APPVEYOR_REPO_TAG_NAME")
 		info.commit = os.Getenv("APPVEYOR_REPO_COMMIT")
@@ -179,7 +179,7 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 		info.buildId = os.Getenv("APPVEYOR_JOB_ID")
 		info.isPullRequest = os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER") != ""
 	} else {
-		fmt.Println("Running on AppVeyor CI")
+		fmt.Println("Running on Travis CI")
 		info.branch = os.Getenv("TRAVIS_BRANCH")
 		info.tag = os.Getenv("TRAVIS_TAG")
 		info.commit = os.Getenv("TRAVIS_COMMIT")
