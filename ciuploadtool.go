@@ -221,7 +221,7 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 	} else if pSuffix != nil {
 		suffix := osName + "-" + *pSuffix
 		info.releaseTagName = "continuous-" + suffix
-		info.releaseTitle = "Continuous build (" + suffix + ")"
+		info.releaseTitle = "Continuous build (" + info.releaseTagName + ")"
 		info.isPreRelease = true
 	} else {
 		info.releaseTagName = "continuous-" + osName // Do not use "latest" as it is reserved by GitHub
@@ -289,8 +289,8 @@ func createRelease(ctx context.Context, client *github.Client, info *buildEventI
 	*release.TargetCommitish = info.commit
 	release.Name = new(string)
 	*release.Name = info.releaseTitle
-	release.Draft = new(bool)
-	*release.Draft = info.isPreRelease
+	release.Prerelease = new(bool)
+	*release.Prerelease = info.isPreRelease
 
 	release.Body = new(string)
 	if pReleaseBody == nil {
