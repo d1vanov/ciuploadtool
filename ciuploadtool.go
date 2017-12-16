@@ -337,7 +337,7 @@ func deleteTag(client *http.Client, info *buildEventInfo) error {
 		defer response.Body.Close()
 	}
 
-	if response.StatusCode != 200 {
+	if response.StatusCode < 200 || response.StatusCode > 299 {
 		return fmt.Errorf("Failed to fetch response to tag deletion: status code = %d: %s", response.StatusCode, response.Status)
 	}
 
