@@ -1,4 +1,4 @@
-package ciuploadtool
+package main
 
 import (
 	"errors"
