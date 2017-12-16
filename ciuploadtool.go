@@ -289,6 +289,8 @@ func createRelease(ctx context.Context, client *github.Client, info *buildEventI
 	*release.TargetCommitish = info.commit
 	release.Name = new(string)
 	*release.Name = info.releaseTitle
+	release.Draft = new(bool)
+	*release.Draft = info.isPreRelease
 
 	release.Body = new(string)
 	if pReleaseBody == nil {
@@ -376,9 +378,8 @@ func uploadBinaries(filenames []string, ctx context.Context, client *github.Clie
 			defer response.Body.Close()
 		}
 
-		err = checkResponse(response)
-		if err != nil {
-			return err
+		if response.StatusCode != 201 {
+			return fmt.Errorf("Bad response code on attempt to upload release asset: expected 201, got %d", response.StatusCode)
 		}
 	}
 
