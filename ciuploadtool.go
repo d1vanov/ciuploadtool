@@ -19,7 +19,7 @@ func main() {
 	var pReleaseBody = flag.String("relbody", "", "Optional content for the body of created releases")
 	flag.Parse()
 
-	if flag.NArg() < 2 {
+	if flag.NArg() < 1 {
 		fmt.Printf("Usage: %s [-suffix=<suffix for continuous release names>] [-relbody=<release body message>] <files to upload>\n", os.Args[0])
 		os.Exit(-1)
 	}
