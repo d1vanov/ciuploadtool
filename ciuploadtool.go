@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -18,7 +19,7 @@ func main() {
 	var pReleaseBody = flag.String("relbody", "", "Optional content for the body of created releases")
 	flag.Parse()
 
-	if len(flag.NArg()) < 2 {
+	if flag.NArg() < 2 {
 		fmt.Printf("Usage: %s [-suffix=<suffix for continuous release names>] [-relbody=<release body message>] <files to upload>\n", os.Args[0])
 		os.Exit(-1)
 	}
@@ -35,7 +36,7 @@ func main() {
 
 	// Setup GitHub client
 	ctx = context.Background()
-	tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: info.token})
 	tokenizedClient := oauth2.NewClient(ctx, tokenSource)
 
 	client := github.NewClient(tokenizedClient)
