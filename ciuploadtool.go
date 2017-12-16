@@ -351,6 +351,19 @@ func uploadBinaries(filenames []string, ctx context.Context, client *github.Clie
 		}
 		defer file.Close()
 
+		stat, err := file.Stat()
+		if err != nil {
+			return err
+		}
+
+		mode := stat.Mode()
+		if !mode.IsRegular() {
+			fmt.Printf("Skipping dir %s\n", filename)
+			continue
+		}
+
+		fmt.Printf("Trying to upload file: %s\n", filename)
+
 		var options github.UploadOptions
 		options.Name = filepath.Base(filename)
 
