@@ -41,45 +41,52 @@ func main() {
 
 	client := github.NewClient(tokenizedClient)
 
-	// Fetch release info
-	release, response, err := client.Repositories.GetReleaseByTag(ctx, info.owner, info.repo, info.releaseTagName)
-	if err != nil {
-		fmt.Printf("Failed to request release information: %v", err)
-		os.Exit(-1)
-	}
+	// Fetch release info (if release with target tag name already exists)
+	releaseExists := false
 
+	release, response, err := client.Repositories.GetReleaseByTag(ctx, info.owner, info.repo, info.releaseTagName)
 	if response != nil {
 		defer response.Body.Close()
 	}
-
-	err = checkResponse(response)
 	if err != nil {
-		fmt.Print(err)
-		os.Exit(-1)
+		if response != nil && response.StatusCode == 404 {
+			err = nil
+		}
+		if err != nil {
+			fmt.Printf("Failed to fetch release information: %v", err)
+			os.Exit(-1)
+		}
+	} else {
+		err = checkResponse(response)
+		if err != nil {
+			fmt.Print(err)
+			os.Exit(-1)
+		}
+		releaseExists = true
 	}
 
-	releaseExists := false
-	targetCommitSha, err := getReleaseTargetCommitSha(release)
-	if err == nil {
-		releaseExists = true
-		if info.commit != targetCommitSha {
-			fmt.Printf("Found existing release but its commit SHA doesn't match the current one: %s vs %s\n", info.commit, targetCommitSha)
-			fmt.Printf("Deleting the existing release to recreate it with the current commit SHA %s\n", info.commit)
+	if releaseExists {
+		targetCommitSha, err := getReleaseTargetCommitSha(release)
+		if err == nil {
+			if info.commit != targetCommitSha {
+				fmt.Printf("Found existing release but its commit SHA doesn't match the current one: %s vs %s\n", info.commit, targetCommitSha)
+				fmt.Printf("Deleting the existing release to recreate it with the current commit SHA %s\n", info.commit)
 
-			err = deleteRelease(ctx, client, info, release)
-			if err != nil {
-				fmt.Print(err)
-				os.Exit(-1)
-			}
-
-			releaseExists = false
-
-			if info.isPreRelease {
-				fmt.Printf("Since the existing release was pre-release one, need to also remove the tag corresponding to it")
-				err = deleteTag(tokenizedClient, info)
+				err = deleteRelease(ctx, client, info, release)
 				if err != nil {
 					fmt.Print(err)
 					os.Exit(-1)
+				}
+
+				releaseExists = false
+
+				if info.isPreRelease {
+					fmt.Printf("Since the existing release was pre-release one, need to also remove the tag corresponding to it")
+					err = deleteTag(tokenizedClient, info)
+					if err != nil {
+						fmt.Print(err)
+						os.Exit(-1)
+					}
 				}
 			}
 		}
@@ -87,12 +94,6 @@ func main() {
 
 	if !releaseExists {
 		release, err = createRelease(ctx, client, info, pReleaseBody)
-		if err != nil {
-			fmt.Print(err)
-			os.Exit(-1)
-		}
-
-		targetCommitSha, err = getReleaseTargetCommitSha(release)
 		if err != nil {
 			fmt.Print(err)
 			os.Exit(-1)
