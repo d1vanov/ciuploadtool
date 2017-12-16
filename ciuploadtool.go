@@ -8,6 +8,7 @@ import (
 	"golang.org/x/oauth2"
 	"http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -97,13 +98,29 @@ func main() {
 		}
 	}
 
-	err = uploadBinaries(flag.Args(), uploadUrl)
+	files = commandLineFiles(flag.Args())
+	err = uploadBinaries(files, uploadUrl)
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(-1)
 	}
 
 	return
+}
+
+func commandLineFiles(files []string) []string {
+	if runtime.GOOS == "windows" {
+		args := make([]string, 0, len(files))
+		for _, name := range files {
+			if matches, err := filepath.Glob(name); err != nil {
+				args = append(args, name) // Invalid pattern
+			} else if matches != nil { // At least one match
+				args = append(args, matches...)
+			}
+		}
+		return args
+	}
+	return files
 }
 
 type buildEventInfo struct {
