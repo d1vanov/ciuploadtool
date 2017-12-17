@@ -294,9 +294,9 @@ func createRelease(ctx context.Context, client *github.Client, info *buildEventI
 	release.Body = new(string)
 	if pReleaseBody == nil {
 		if info.isTravisCi && info.buildId != "" {
-			*pReleaseBody = "Travis CI build log: https://travis-ci.org/" + info.owner + "/" + info.repo + "/builds/" + info.buildId + "/"
+			*release.Body = "Travis CI build log: https://travis-ci.org/" + info.owner + "/" + info.repo + "/builds/" + info.buildId + "/"
 		} else if !info.isTravisCi && info.buildId != "" {
-			*pReleaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + info.buildId + "/log"
+			*release.Body = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + info.buildId + "/log"
 		}
 	} else {
 		*release.Body = *pReleaseBody
