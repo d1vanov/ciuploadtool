@@ -81,7 +81,7 @@ func main() {
 				releaseExists = false
 
 				if info.isPreRelease {
-					fmt.Printf("Since the existing release was pre-release one, need to also remove the tag corresponding to it")
+					fmt.Println("Since the existing release was pre-release one, need to also remove the tag corresponding to it")
 					err = deleteTag(tokenizedClient, info)
 					if err != nil {
 						fmt.Print(err)
