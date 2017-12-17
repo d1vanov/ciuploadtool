@@ -25,7 +25,7 @@ and upload the specified binaries there. Here are the necessary setup steps:
 - Under "Environment Variables", add key `GITHUB_TOKEN` and the token you generated above as the value. **Make sure that "Display value in build log" is set to "OFF"!**
 - In the `.travis.yml` of your GitHub repository, add something like this (assuming the build artifacts to be uploaded are in out/):
 
-    ```yaml
+```yaml
     after_success:
       - ls -lh out/* # Assuming you have some files in out/ that you would like to upload
       - wget -c https://github.com/d1vanov/ciuploadtool/raw/master/ciuploadtool.go
@@ -37,13 +37,13 @@ and upload the specified binaries there. Here are the necessary setup steps:
       except:
         - # Do not build tags that we create when we upload to GitHub Releases
         - /^(?i:continuous)$/
-    ```
+```
 
 - On AppVeyor CI, go to page `https://ci.appveyor.com/tools/encrypt`, paste there the GutHub token created above, press "Encrypt" button
 - Copy the output encrypted string
 - In the `appveyor.yml` of your GitHub repository, add something like this (assuming the build artifacts to be uploaded are in out\\):
 
-    ```yaml
+```yaml
     environment:
       auth_token:
         secure: <your encrypted token> # your encrypted token from GitHub
@@ -60,7 +60,7 @@ and upload the specified binaries there. Here are the necessary setup steps:
       except:
         - # Do not build tags that we create when we upload to GitHub Releases
         - /^(?i:continuous)$/
-    ```
+```
 
 Note that `ciuploadtool` replaces the normal deployment step for AppVeyor CI, so if you have deployment set up for GitHub,
 you should just remove it to prevent the conflicts between AppVeyor's built-in deployment processing and the tool's job.
@@ -81,7 +81,7 @@ to the branch name so builds from master branch would produce continuous release
 builds from development branch would produce continuous release tagged with `continuous-development` tag. Here's the example
 configuration for Travis CI:
 
-    ```yaml
+```yaml
     after_success:
       - ls -lh out/* # Assuming you have some files in out/ that you would like to upload
       - wget -c https://github.com/d1vanov/ciuploadtool/raw/master/ciuploadtool.go
@@ -94,7 +94,7 @@ configuration for Travis CI:
         - master
         - development
         - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
-    ```
+```
 
 The regular expression within the last line of `branches` list is for tagged releases in the form `v1.0.0` i.e. character `v`
 followed by three digits denoting major, minor and patch versions separated by dots. If you name tags some other way, adjust
@@ -102,7 +102,7 @@ the regexp accordingly.
 
 The analog of such configuration for AppVeyor CI:
 
-    ```yaml
+```yaml
     environment:
       auth_token:
         secure: <your encrypted token> # your encrypted token from GitHub
@@ -120,7 +120,7 @@ The analog of such configuration for AppVeyor CI:
         - master
         - development
         - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
-    ```
+```
 
 Note also that this scheme uses one subtle particularity of both Travis CI and AppVeyor CI: `TRAVIS_BRANCH` and `APPVEYOR_REPO_BRANCH`
 are equal to the actual branch names during builds produces by commits but they are equal to the names of tags when they are triggered
