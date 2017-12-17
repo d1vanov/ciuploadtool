@@ -212,6 +212,7 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 		info.releaseTagName = info.tag
 		info.releaseTitle = "Release build (" + info.tag + ")"
 	} else if pSuffix != nil {
+		fmt.Printf("Suffix = %s\n", *pSuffix)
 		info.releaseTagName = "continuous-" + *pSuffix
 		info.releaseTitle = "Continuous build (" + info.releaseTagName + ")"
 		info.isPreRelease = true
