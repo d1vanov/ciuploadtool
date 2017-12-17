@@ -201,7 +201,7 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 
 	repoSlugSplitted := strings.Split(repoSlug, "/")
 	if len(repoSlugSplitted) != 2 {
-		fmt.Printf("Error splitting APPVEYOR_REPO_NAME into owner and repo: %s\n", repoSlug)
+		fmt.Printf("Error splitting repo slug into owner and repo: %s\n", repoSlug)
 		os.Exit(-1)
 	}
 
