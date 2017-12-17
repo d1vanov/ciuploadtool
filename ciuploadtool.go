@@ -208,24 +208,16 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 	info.owner = repoSlugSplitted[0]
 	info.repo = repoSlugSplitted[1]
 
-	var osName string
-	if runtime.GOOS == "darwin" {
-		osName = "mac"
-	} else {
-		osName = runtime.GOOS
-	}
-
 	if pSuffix == nil || *pSuffix == info.tag {
 		info.releaseTagName = info.tag
 		info.releaseTitle = "Release build (" + info.tag + ")"
 	} else if pSuffix != nil {
-		suffix := osName + "-" + *pSuffix
-		info.releaseTagName = "continuous-" + suffix
+		info.releaseTagName = "continuous-" + *pSuffix
 		info.releaseTitle = "Continuous build (" + info.releaseTagName + ")"
 		info.isPreRelease = true
 	} else {
-		info.releaseTagName = "continuous-" + osName // Do not use "latest" as it is reserved by GitHub
-		info.releaseTitle = "Continuous build (" + osName + ")"
+		info.releaseTagName = "continuous" // Do not use "latest" as it is reserved by GitHub
+		info.releaseTitle = "Continuous build"
 		info.isPreRelease = true
 	}
 
