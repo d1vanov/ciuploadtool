@@ -9,7 +9,7 @@ If you use Travis CI and/or AppVeyor CI for your project, you know that it is po
 built by these services to GitHub releases. However, it is not as simple as one would desire. `ciuploadtool` strives
 to make it as simple as possible.
 
-The logics behind `ciuploadtool` was heavily inspired by [this tool]() working with Travis CI only, not AppVeyor CI. I've been
+The logics behind `ciuploadtool` was heavily inspired by [this tool](https://github.com/probonopd/uploadtool) working with Travis CI only, not AppVeyor CI. I've been
 using it myself, it's quite easy to use and robust. If you use only Travis CI but not AppVeyor CI, you can just use that solution
 and forget about this project. However, if your project uses AppVeyor CI in addition to Travis CI or exclusively, you might
 want to try this tool out.
