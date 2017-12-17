@@ -161,6 +161,12 @@ func getBuildEventInfo(pSuffix *string) (*buildEventInfo, error) {
 	}
 
 	if info.token == "" {
+		if isAppVeyor {
+			// This happens in AppVeyor CI on pull request builds, will silently
+			// ignore that
+			return nil, nil
+		}
+
 		return nil, errors.New("No GitHub access token, can't proceed")
 	}
 
