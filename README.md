@@ -1,7 +1,7 @@
 ciuploadtool
 ===========
 
-**Command line tool for uploading of binaries from Travis CI and AppVeyor CI builds**
+**Command line tool for uploading of binaries from Travis CI and AppVeyor CI builds tp GitHub releases**
 
 Travis CI (Linux, OS X): [![Build Status](https://travis-ci.org/d1vanov/ciuploadtool.svg?branch=master)](https://travis-ci.org/d1vanov/ciuploadtool)
 
