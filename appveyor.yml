@@ -25,12 +25,12 @@ install:
 
 build_script:
   - go build
-  - set CIUPLOADTOOL_NAME=ciuploadtool_windows_%platform%
-  - move ciuploadtool.exe %CIUPLOADTOOL_NAME%.exe
+  - set CIUPLOADTOOL_ARCHIVE_NAME=ciuploadtool_windows_%platform%.zip
+  - 7z a %CIUPLOADTOOL_ARCHIVE_NAME% ciuploadtool.exe
 
 artifacts:
-  - path: %CIUPLOADTOOL_NAME%.exe
-    name: %CIUPLOADTOOL_NAME%
+  - path: '*.zip'
+    name: ciuploadtool
 
 on_finish:
-  - %CIUPLOADTOOL_NAME%.exe -suffix="%APPVEYOR_REPO_BRANCH%" %CIUPLOADTOOL_NAME%.exe
+  - ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" "%CIUPLOADTOOL_NAME%"
