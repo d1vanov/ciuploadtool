@@ -22,7 +22,8 @@ script:
   - go build
 
 after_success:
-    - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+    - |
+      if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         export CIUPLOADTOOL_NAME=ciuploadtool_linux
       else
         export CIUPLOADTOOL_NAME=ciuploadtool_mac
