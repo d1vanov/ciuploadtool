@@ -29,3 +29,5 @@ after_success:
       fi
       mv ciuploadtool $CIUPLOADTOOL_NAME &&
       $CIUPLOADTOOL_NAME -suffix=$TRAVIS_BRANCH $CIUPLOADTOOL_NAME
+
+# dummy comment to trigger build
