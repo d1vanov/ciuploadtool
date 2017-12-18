@@ -28,6 +28,5 @@ after_success:
       else
         export CIUPLOADTOOL_NAME=ciuploadtool_mac
       fi
-      ls -lh * &&
       mv ciuploadtool $CIUPLOADTOOL_NAME &&
-      $CIUPLOADTOOL_NAME -suffix=$TRAVIS_BRANCH $CIUPLOADTOOL_NAME
+      ./$CIUPLOADTOOL_NAME -suffix=$TRAVIS_BRANCH $CIUPLOADTOOL_NAME
