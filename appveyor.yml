@@ -8,7 +8,7 @@ branches:
 
 environment: 
   auth_token:
-    secure: 7DjX/0v2lEQxR10o1vjqh5mrqgNB8rp1xANMofZYVDC5jzOiymdTQZqqbKFhXHyJ
+    secure: bFPozfVngJ8Gonjmldc8N5leBx7PxwwYIqnK/bpSsPVUYqEYHafBBQRwrtdL+oc9
   matrix:
     - platform: x86
     - platform: x64
