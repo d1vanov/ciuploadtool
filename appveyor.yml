@@ -33,4 +33,4 @@ artifacts:
     name: ciuploadtool
 
 on_finish:
-  - ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" "%CIUPLOADTOOL_NAME%"
+  - ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" "%CIUPLOADTOOL_ARCHIVE_NAME%"
