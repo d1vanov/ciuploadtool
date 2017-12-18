@@ -1,0 +1,36 @@
+version: '0.1.0-{build}'
+
+branches:
+  only:
+    - master
+    - development
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+
+environment: 
+  auth_token:
+    secure: bFPozfVngJ8Gonjmldc8N5leBx7PxwwYIqnK/bpSsPVUYqEYHafBBQRwrtdL+oc9
+  matrix:
+    - platform: x86
+    - platform: x64
+
+clone_folder: c:\dev\ciuploadtool
+
+init:
+  - set GOPATH=c:\gopath
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+
+install:
+  - go get golang.org/x/oauth2
+  - go get github.com/google/go-github/github
+
+build_script:
+  - go build
+  - set CIUPLOADTOOL_ARCHIVE_NAME=ciuploadtool_windows_%platform%.zip
+  - 7z a %CIUPLOADTOOL_ARCHIVE_NAME% ciuploadtool.exe
+
+artifacts:
+  - path: '*.zip'
+    name: ciuploadtool
+
+on_finish:
+  - ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" "%CIUPLOADTOOL_ARCHIVE_NAME%"
