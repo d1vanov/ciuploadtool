@@ -27,7 +27,5 @@ after_success:
       else
         export CIUPLOADTOOL_NAME=ciuploadtool_mac
       fi
-      mv ciuploadtool $CIUPLOADTOOL_NAME &&
-      $CIUPLOADTOOL_NAME -suffix=$TRAVIS_BRANCH $CIUPLOADTOOL_NAME
-
-# dummy comment to trigger build
+    - mv ciuploadtool $CIUPLOADTOOL_NAME
+    - $CIUPLOADTOOL_NAME -suffix=$TRAVIS_BRANCH $CIUPLOADTOOL_NAME
