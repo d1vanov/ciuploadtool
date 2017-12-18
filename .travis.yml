@@ -1,0 +1,31 @@
+language: go
+
+go:
+  - 1.7.x
+
+matrix:
+    include:
+        - os: linux
+        - os: osx
+
+branches:
+    only:
+        - master
+        - development
+        - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+
+install:
+  - go get golang.org/x/oauth2
+  - go get github.com/google/go-github/github
+
+script:
+  - go build
+
+after_success:
+    - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+        export CIUPLOADTOOL_NAME=ciuploadtool_linux
+      else
+        export CIUPLOADTOOL_NAME=ciuploadtool_mac
+      fi
+      mv ciuploadtool $CIUPLOADTOOL_NAME &&
+      $CIUPLOADTOOL_NAME -suffix=$TRAVIS_BRANCH $CIUPLOADTOOL_NAME
