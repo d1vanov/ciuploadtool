@@ -3,6 +3,10 @@ ciuploadtool
 
 **Command line tool for uploading of binaries from Travis CI and AppVeyor CI builds**
 
+Travis CI (Linux, OS X): [![Build Status](https://travis-ci.org/d1vanov/ciuploadtool.svg?branch=master)](https://travis-ci.org/d1vanov/ciuploadtool)
+
+AppVeyor CI (Windows): [![Build status](https://ci.appveyor.com/api/projects/status/rsid6nlpmj2fq5ux/branch/master?svg=true)](https://ci.appveyor.com/project/d1vanov/ciuploadtool/branch/master)
+
 ## What's this
 
 If you use Travis CI and/or AppVeyor CI for your project, you know that it is possible to deploy the binaries
@@ -28,10 +32,16 @@ and upload the specified binaries there. Here are the necessary setup steps:
 ```yaml
     after_success:
       - ls -lh out/* # Assuming you have some files in out/ that you would like to upload
-      - wget -c https://github.com/d1vanov/ciuploadtool/raw/master/ciuploadtool.go
-      - go get golang.org/x/oauth2 &&
-      - go get github.com/google/go-github/github &&
-      - go run ciuploadtool.go out/*
+      - |
+        if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+          wget https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_linux.zip &&
+          unzip ciuploadtool_linux.zip
+        else
+          wget https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_mac.zip &&
+          unzip ciuploadtool_mac.zip
+        fi
+      - chmod 755 ciuploadtool
+      - ./ciuploadtool out/*
 
     branches:
       except:
@@ -50,11 +60,9 @@ and upload the specified binaries there. Here are the necessary setup steps:
 
     on_finish:
       - dir /s out\ # Assuming you have some artifacts in out that you would like to upload
-      - curl -fsSL https://github.com/d1vanov/ciuploadtool/raw/master/ciuploadtool.go -o ciuploadtool.go
-      - set GOPATH=%cd%
-      - go get golang.org/x/oauth2
-      - go get github.com/google/go-github/github
-      - go run ciuploadtool.go out\*
+      - curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
+      - 7z x ciuploadtool_windows_x86.zip
+      - ciuploadtool out\*
 
     branches:
       except:
@@ -84,10 +92,16 @@ configuration for Travis CI:
 ```yaml
     after_success:
       - ls -lh out/* # Assuming you have some files in out/ that you would like to upload
-      - wget -c https://github.com/d1vanov/ciuploadtool/raw/master/ciuploadtool.go
-      - go get golang.org/x/oauth2
-      - go get github.com/google/go-github/github
-      - go run ciuploadtool.go -suffix="$TRAVIS_BRANCH" out/*
+      - |
+        if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+          wget https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_linux.zip &&
+          unzip ciuploadtool_linux.zip
+        else
+          wget https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_mac.zip &&
+          unzip ciuploadtool_mac.zip
+        fi
+      - chmod 755 ciuploadtool
+      - ./ciuploadtool -suffix="$TRAVIS_BRANCH" out/*
 
     branches:
       only:
@@ -109,11 +123,9 @@ The analog of such configuration for AppVeyor CI:
 
     on_finish:
       - dir /s out\ # Assuming you have some artifacts in out that you would like to upload
-      - curl -fsSL https://github.com/d1vanov/ciuploadtool/raw/master/ciuploadtool.go -o ciuploadtool.go
-      - set GOPATH=%cd%
-      - go get golang.org/x/oauth2
-      - go get github.com/google/go-github/github
-      - go run ciuploadtool.go -suffix="%APPVEYOR_REPO_BRANCH%" out\*
+      - curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
+      - 7z x ciuploadtool_windows_x86.zip
+      - ciuploadtool -suffix="%APPVEYOR_REPO_BRANCH%" out\*
 
     branches:
       only:
