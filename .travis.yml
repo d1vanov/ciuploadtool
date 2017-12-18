@@ -3,6 +3,9 @@ language: go
 go:
   - 1.7.x
 
+sudo: required
+dist: trusty
+
 matrix:
     include:
         - os: linux
@@ -15,6 +18,12 @@ branches:
         - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 install:
+  - |
+    if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+      sudo apt-get install p7zip-full
+    else
+      brew install p7zip
+    fi
   - go get golang.org/x/oauth2
   - go get github.com/google/go-github/github
 
@@ -28,5 +37,5 @@ after_success:
       else
         export CIUPLOADTOOL_NAME=ciuploadtool_mac
       fi
-      mv ciuploadtool $CIUPLOADTOOL_NAME &&
-      ./$CIUPLOADTOOL_NAME -suffix=$TRAVIS_BRANCH $CIUPLOADTOOL_NAME
+      7z a ${CIUPLOADTOOL_NAME}.zip ciuploadtool &&
+      ./ciuploadtool -suffix=$TRAVIS_BRANCH ${CIUPLOADTOOL_NAME}.zip
