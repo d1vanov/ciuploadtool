@@ -7,26 +7,32 @@ import (
 )
 
 type Client interface {
-	GetReleaseByTag(ctx context.Context, owner string, repo string, tagName string) (Release, Response, error)
-	CreateRelease(ctx context.Context, owner string, repo string, release Release) (Release, Response, error)
-	DeleteRelease(ctx context.Context, owner string, repo string, releaseId int) (Response, error)
-	DeleteTag(ctx context.Context, owner string, repo string, tagName string) (Response, error)
-	ListReleaseAssets(ctx context.Context, owner string, repo string, releaseId int) ([]ReleaseAsset, Response, error)
-	DeleteReleaseAsset(ctx context.Context, owner string, repo string, assetId int) (Response, error)
-	UploadReleaseAsset(ctx context.Context, owner string, repo string, releaseId int, assetName string,
-		assetFile *os.File) (ReleaseAsset, Response, error)
+	GetContext() context.Context
+	GetOwner() string
+	GetRepo() string
+	GetReleaseByTag(tagName string) (Release, Response, error)
+	CreateRelease(release Release) (Release, Response, error)
+	DeleteRelease(releaseId int) (Response, error)
+	DeleteTag(tagName string) (Response, error)
+	ListReleaseAssets(releaseId int) ([]ReleaseAsset, Response, error)
+	DeleteReleaseAsset(assetId int) (Response, error)
+	UploadReleaseAsset(releaseId int, assetName string, assetFile *os.File) (ReleaseAsset, Response, error)
 }
 
 type Release interface {
 	GetID() int
 	GetName() string
+	GetBody() string
+	SetBody(body string)
 	GetTagName() string
 	GetTargetCommitish() string
 	GetDraft() bool
 	GetPrerelease() bool
+	GetAssets() []ReleaseAsset
 }
 
 type Response interface {
+	Check() error
 	GetStatusCode() int
 	GetStatus() string
 	GetBody() io.ReadCloser
