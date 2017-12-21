@@ -1,9 +1,11 @@
 package uploader
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type clientFactoryFunc func(gitHubToken string, owner string, repo string) Client
@@ -87,6 +89,11 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 		return client, err
 	}
 
+	if releaseExists {
+		release = updateBuildLogWithinReleaseBody(release, info)
+		// TODO: need to update the release
+	}
+
 	for _, filename := range commandLineFiles(filenames) {
 		file, err := os.Open(filename)
 		if err != nil {
@@ -150,9 +157,30 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 	return client, nil
 }
 
-func appendCiLogToReleaseBody(release Release, info *buildEventInfo) {
+func updateBuildLogWithinReleaseBody(release Release, info *buildEventInfo) Release {
 	existingBody := release.GetBody()
-	if info.isTravisCi && len(info.buildId) != 0 {
-		existingBody = existingBody + "\nTravis CI build log: https://travis-ci.org/" + info.owner + "/" + info.repo + "/builds/" + info.buildId + "/"
+	scanner := bufio.NewScanner(strings.NewReader(existingBody))
+	newBody := ""
+	for scanner.Scan() {
+		line := scanner.Text()
+		if info.isTravisCi && strings.HasPrefix(line, "Travis CI build log: https://travis-ci.org/"+info.owner+"/"+info.repo+"/builds/") {
+			if len(info.buildId) != 0 {
+				line = "Travis CI build log: https://travis-ci.org/" + info.owner + "/" + info.repo + "/builds/" + info.buildId + "/\n"
+			} else {
+				line = ""
+			}
+		} else if !info.isTravisCi && strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/") {
+			if len(info.buildId) != 0 {
+				line = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + info.buildId + "/log\n"
+			} else {
+				line = ""
+			}
+		} else {
+			line = line + "\n"
+		}
+
+		newBody = newBody + line
 	}
+	release.SetBody(newBody)
+	return release
 }

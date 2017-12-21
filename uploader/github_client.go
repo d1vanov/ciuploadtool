@@ -51,7 +51,7 @@ func newGitHubRelease(releaseBody string, info *buildEventInfo) Release {
 	*release.release.Body = releaseBody
 	release.release.Prerelease = new(bool)
 	*release.release.Prerelease = info.isPrerelease
-	return release
+	return updateBuildLogWithinReleaseBody(release, info)
 }
 
 func (client GitHubClient) GetContext() context.Context {

@@ -64,7 +64,7 @@ func newTstRelease(releaseBody string, info *buildEventInfo) Release {
 		isPrerelease:    info.isPrerelease,
 	}
 	lastFreeReleaseId++
-	return &release
+	return updateBuildLogWithinReleaseBody(&release, info)
 }
 
 func (client TstClient) GetContext() context.Context {
