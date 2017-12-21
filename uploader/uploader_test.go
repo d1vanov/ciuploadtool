@@ -46,7 +46,7 @@ func TestNewReleaseWithSingleUploadedBinary(t *testing.T) {
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), []string{file.Name()},
@@ -134,7 +134,7 @@ func TestNewReleaseWithSeveralUploadedBinaries(t *testing.T) {
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), filenames,
@@ -213,7 +213,7 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -312,7 +312,7 @@ func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) 
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -402,7 +402,7 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -507,7 +507,7 @@ func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testi
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -647,7 +647,7 @@ func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(t *te
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -782,7 +782,7 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -863,7 +863,7 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -1000,7 +1000,7 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
 			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION") + "/"
+				os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {

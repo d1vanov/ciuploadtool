@@ -205,5 +205,5 @@ func ciBuildLogString(info *buildEventInfo) string {
 	if info.isTravisCi {
 		return "Travis CI build log: https://travis-ci.org/" + info.owner + "/" + info.repo + "/builds/" + info.buildId + "/"
 	}
-	return "AppVeyor CI build log: https://ci.appveyor.com/project/" + info.owner + "/" + info.repo + "/build/" + info.buildId + "/"
+	return "AppVeyor CI build log: https://ci.appveyor.com/project/" + info.owner + "/" + info.repo + "/build/" + info.buildId
 }
