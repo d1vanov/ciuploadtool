@@ -82,6 +82,15 @@ func (client GitHubClient) CreateRelease(release Release) (Release, Response, er
 	return GitHubRelease{release: gitHubRelease}, GitHubResponse{response: gitHubResponse}, err
 }
 
+func (client GitHubClient) UpdateRelease(release Release) (Release, Response, error) {
+	if client.client == nil {
+		return GitHubRelease{}, GitHubResponse{}, errors.New("GitHub client is nil")
+	}
+	gitHubRelease, gitHubResponse, err := client.client.Repositories.EditRelease(client.ctx, client.owner, client.repo,
+		release.GetID(), release.(GitHubRelease).release)
+	return GitHubRelease{release: gitHubRelease}, GitHubResponse{response: gitHubResponse}, err
+}
+
 func (client GitHubClient) DeleteRelease(releaseId int) (Response, error) {
 	if client.client == nil {
 		return GitHubResponse{}, errors.New("GitHub client is nil")

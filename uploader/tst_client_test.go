@@ -106,6 +106,7 @@ func (client *TstClient) CreateRelease(release Release) (Release, Response, erro
 	if len(name) == 0 {
 		return nil, TstResponse{statusCode: 400, status: "Missing release name"}, errors.New("The release to be created has no name")
 	}
+
 	tstRelease := release.(*TstRelease)
 	tstRelease.id = lastFreeReleaseId
 	lastFreeReleaseId++
@@ -117,6 +118,20 @@ func (client *TstClient) CreateRelease(release Release) (Release, Response, erro
 	return tstRelease, TstResponse{statusCode: 200, status: "Created"}, nil
 }
 
+func (client *TstClient) UpdateRelease(release Release) (Release, Response, error) {
+	if len(client.token) == 0 {
+		return nil, TstResponse{statusCode: 401, status: "Bad credentials"}, errors.New("No GitHub token")
+	}
+	for i := range client.releases {
+		if client.releases[i].GetID() != release.GetID() {
+			continue
+		}
+		client.releases[i] = *(release.(*TstRelease))
+		return release, TstResponse{statusCode: 200, status: "Updated"}, nil
+	}
+	return nil, TstResponse{statusCode: 404, status: "Not found"}, errors.New("Release matching by ID was not found")
+}
+
 func (client *TstClient) DeleteRelease(releaseId int) (Response, error) {
 	if len(client.token) == 0 {
 		return TstResponse{statusCode: 401, status: "Bad credentials"}, errors.New("No GitHub token")
@@ -124,9 +139,10 @@ func (client *TstClient) DeleteRelease(releaseId int) (Response, error) {
 	if len(client.releases) == 0 {
 		return TstResponse{statusCode: 204, status: "No content"}, errors.New("No releases within client")
 	}
-	for _, release := range client.releases {
+	for i, release := range client.releases {
 		if release.GetID() == releaseId {
-			return TstResponse{statusCode: 204, status: "No content"}, nil
+			client.releases = append(client.releases[:i], client.releases[i+1:]...)
+			return TstResponse{statusCode: 200, status: "Deleted"}, nil
 		}
 	}
 	return TstResponse{statusCode: 204, status: "No content"}, errors.New("No such release found")

@@ -12,6 +12,7 @@ type Client interface {
 	GetRepo() string
 	GetReleaseByTag(tagName string) (Release, Response, error)
 	CreateRelease(release Release) (Release, Response, error)
+	UpdateRelease(release Release) (Release, Response, error)
 	DeleteRelease(releaseId int) (Response, error)
 	DeleteTag(tagName string) (Response, error)
 	ListReleaseAssets(releaseId int) ([]ReleaseAsset, Response, error)

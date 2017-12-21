@@ -79,6 +79,7 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 	var existingReleaseAssets []ReleaseAsset
 
 	if !releaseExists {
+		fmt.Println("Creating new release")
 		release, response, err = client.CreateRelease(releaseFactory(releaseBody, info))
 	} else {
 		existingReleaseAssets, response, err = client.ListReleaseAssets(release.GetID())
@@ -89,9 +90,24 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 		return client, err
 	}
 
+	err = response.Check()
+	if err != nil {
+		if !releaseExists {
+			return client, fmt.Errorf("Bad response on attempt to create the new release: %v", err)
+		}
+		return client, fmt.Errorf("Bad response on attempt to list release assets: %v", err)
+	}
+
 	if releaseExists {
 		release = updateBuildLogWithinReleaseBody(release, info)
-		// TODO: need to update the release
+		release, response, err = client.UpdateRelease(release)
+		response.CloseBody()
+		if err != nil {
+			return client, err
+		}
+		fmt.Printf("Updated build log within the release body: %+v\n", release)
+	} else {
+		fmt.Printf("Created release: %+v\n", release)
 	}
 
 	for _, filename := range commandLineFiles(filenames) {
