@@ -63,7 +63,7 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 		info.tag = os.Getenv("APPVEYOR_REPO_TAG_NAME")
 		info.commit = os.Getenv("APPVEYOR_REPO_COMMIT")
 		repoSlug = os.Getenv("APPVEYOR_REPO_NAME")
-		info.buildId = os.Getenv("APPVEYOR_JOB_ID")
+		info.buildId = os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER")
 		info.isPullRequest = os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER") != ""
 	} else {
 		fmt.Println("Running on Travis CI")
@@ -71,7 +71,7 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 		info.tag = os.Getenv("TRAVIS_TAG")
 		info.commit = os.Getenv("TRAVIS_COMMIT")
 		repoSlug = os.Getenv("TRAVIS_REPO_SLUG")
-		info.buildId = os.Getenv("TRAVIS_JOB_ID")
+		info.buildId = os.Getenv("TRAVIS_BUILD_ID")
 		info.isPullRequest = os.Getenv("TRAVIS_EVENT_TYPE") == "pull_request"
 	}
 

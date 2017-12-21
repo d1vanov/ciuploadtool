@@ -31,7 +31,9 @@ func TestNewReleaseWithSingleUploadedBinary(t *testing.T) {
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := "master"
@@ -40,10 +42,11 @@ func TestNewReleaseWithSingleUploadedBinary(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), []string{file.Name()},
@@ -111,7 +114,9 @@ func TestNewReleaseWithSeveralUploadedBinaries(t *testing.T) {
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := "master"
@@ -125,10 +130,11 @@ func TestNewReleaseWithSeveralUploadedBinaries(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), filenames,
@@ -192,7 +198,9 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := "master"
@@ -201,10 +209,11 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -283,7 +292,9 @@ func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) 
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := "master"
@@ -297,10 +308,11 @@ func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) 
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -375,7 +387,9 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := "master"
@@ -384,10 +398,11 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -472,7 +487,9 @@ func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testi
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := "master"
@@ -486,10 +503,11 @@ func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testi
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -609,7 +627,9 @@ func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(t *te
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := "master"
@@ -623,10 +643,11 @@ func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(t *te
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -746,7 +767,9 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := "master"
@@ -755,10 +778,11 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -824,7 +848,9 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "v1.0.0"
-	repoSlug := "d1vanov/ciuploadtool"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
 	isPullRequest := false
 
 	releaseSuffix := tag
@@ -833,10 +859,11 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -969,10 +996,11 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_JOB_ID") + "/"
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/" + os.Getenv("APPVEYOR_JOB_ID") + "/log"
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER") + "/"
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
@@ -1040,7 +1068,7 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 				t.Fatalf("Found Travis CI build log more than once within the release body")
 			}
 			foundTravisCiBuildLogLine = true
-		} else if strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/api/buildjobs/") {
+		} else if strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/project/"+owner+"/"+repo+"/build/") {
 			if foundAppVeyorCiBuildLogLine {
 				t.Fatalf("Found AppVeyor CI build log more than once within the release body")
 			}
@@ -1079,7 +1107,7 @@ func setupTravisCiEnvVars(commit string, branch string, tag string, repoSlug str
 	os.Setenv("TRAVIS_TAG", tag)
 	os.Setenv("TRAVIS_COMMIT", commit)
 	os.Setenv("TRAVIS_REPO_SLUG", repoSlug)
-	os.Setenv("TRAVIS_JOB_ID", generateRandomString(10))
+	os.Setenv("TRAVIS_BUILD_ID", generateRandomString(10))
 	if isPullRequest {
 		os.Setenv("TRAVIS_EVENT_TYPE", "pull_request")
 	} else {
