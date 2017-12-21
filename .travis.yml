@@ -29,6 +29,7 @@ install:
 
 script:
   - go build
+  - go test github.com/d1vanov/ciuploadtool/uploader
 
 after_success:
     - |

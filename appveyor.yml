@@ -13,7 +13,7 @@ environment:
     - platform: x86
     - platform: x64
 
-clone_folder: c:\dev\ciuploadtool
+clone_folder: c:\gopath\src\github.com\d1vanov\ciuploadtool
 
 init:
   - set GOPATH=c:\gopath
@@ -25,6 +25,7 @@ install:
 
 build_script:
   - go build
+  - go test github.com/d1vanov/ciuploadtool/uploader
   - set CIUPLOADTOOL_ARCHIVE_NAME=ciuploadtool_windows_%platform%.zip
   - 7z a %CIUPLOADTOOL_ARCHIVE_NAME% ciuploadtool.exe
 

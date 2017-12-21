@@ -1,9 +1,9 @@
 package main
 
 import (
-	"ciuploadtool/uploader"
 	"flag"
 	"fmt"
+	"github.com/d1vanov/ciuploadtool/uploader"
 	"os"
 )
 
