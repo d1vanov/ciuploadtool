@@ -44,8 +44,9 @@ type TstRelease struct {
 }
 
 type TstReleaseAsset struct {
-	id   int
-	name string
+	id      int
+	name    string
+	content string
 }
 
 func newTstClient(gitHubToken string, owner string, repo string) Client {
@@ -169,10 +170,10 @@ func (client *TstClient) DeleteReleaseAsset(assetId int) (Response, error) {
 	if len(client.releases) == 0 {
 		return TstResponse{statusCode: 404, status: "Not found"}, errors.New("No releases within client")
 	}
-	for _, release := range client.releases {
-		for i, asset := range release.GetAssets() {
+	for i := range client.releases {
+		for j, asset := range client.releases[i].GetAssets() {
 			if asset.GetID() == assetId {
-				release.assets = append(release.assets[:i], release.assets[i+1:]...)
+				client.releases[i].assets = append(client.releases[i].assets[:j], client.releases[i].assets[j+1:]...)
 				return TstResponse{statusCode: 200, status: "Deleted"}, nil
 			}
 		}
@@ -195,7 +196,12 @@ func (client *TstClient) UploadReleaseAsset(releaseId int, assetName string, ass
 						errors.New("Release asset with the given name already exists")
 				}
 			}
-			asset := TstReleaseAsset{id: lastFreeReleaseAssetId}
+			assetFileContent, err := ioutil.ReadAll(assetFile)
+			if err != nil {
+				return TstReleaseAsset{}, TstResponse{statusCode: 400, status: "Failed to read the asset file's contents"},
+					fmt.Errorf("Failed to read the asset file's contents: %v", err)
+			}
+			asset := TstReleaseAsset{id: lastFreeReleaseAssetId, name: assetName, content: string(assetFileContent)}
 			lastFreeReleaseAssetId++
 			release.assets = append(release.assets, asset)
 			client.releases[i] = release
@@ -273,4 +279,8 @@ func (releaseAsset TstReleaseAsset) GetID() int {
 
 func (releaseAsset TstReleaseAsset) GetName() string {
 	return releaseAsset.name
+}
+
+func (releaseAsset TstReleaseAsset) GetContent() string {
+	return releaseAsset.content
 }
