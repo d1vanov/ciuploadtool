@@ -183,7 +183,7 @@ func updateBuildLogWithinReleaseBody(release Release, info *buildEventInfo) Rele
 		if info.isTravisCi && strings.HasPrefix(line, "Travis CI build log: https://travis-ci.org/"+info.owner+"/"+info.repo+"/builds/") {
 			foundCiLine = true
 			line = ciBuildLogString(info)
-		} else if !info.isTravisCi && strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/project/"+info.owner+"/"+info.repo+"/build/"+info.buildId) {
+		} else if !info.isTravisCi && strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/project/"+info.owner+"/"+info.repo+"/build") {
 			foundCiLine = true
 			line = ciBuildLogString(info)
 		}

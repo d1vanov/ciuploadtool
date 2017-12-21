@@ -63,7 +63,7 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 		info.tag = os.Getenv("APPVEYOR_REPO_TAG_NAME")
 		info.commit = os.Getenv("APPVEYOR_REPO_COMMIT")
 		repoSlug = os.Getenv("APPVEYOR_REPO_NAME")
-		info.buildId = os.Getenv("APPVEYOR_BUILD_VERSION") + "-" + os.Getenv("APPVEYOR_BUILD_NUMBER")
+		info.buildId = os.Getenv("APPVEYOR_BUILD_VERSION")
 		info.isPullRequest = os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER") != ""
 	} else {
 		fmt.Println("Running on Travis CI")
