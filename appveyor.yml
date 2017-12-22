@@ -26,7 +26,8 @@ install:
 build_script:
   - go build
   - go test github.com/d1vanov/ciuploadtool/uploader
-  - for /f "delims=" %%a in ('ciuploadtool.exe -preponly') do set CIUPLOADTOOL_OUTPUT=%%a
+  - for /f "tokens=*" %%a in ('ciuploadtool.exe -preponly') do set CIUPLOADTOOL_OUTPUT=%%a
+  - echo %CIUPLOADTOOL_OUTPUT%
   - ps: if ($env:CIUPLOADTOOL_OUTPUT -eq "Created new release") { throw "New build was queued, failing early." }
   - set CIUPLOADTOOL_ARCHIVE_NAME=ciuploadtool_windows_%platform%.zip
   - 7z a %CIUPLOADTOOL_ARCHIVE_NAME% ciuploadtool.exe
