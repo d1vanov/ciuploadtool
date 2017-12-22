@@ -1085,6 +1085,54 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	}
 }
 
+func TestNewReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffix(t *testing.T) {
+	binaryContent := "Binary content"
+	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
+	if err != nil {
+		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+	}
+
+	defer os.Remove(file.Name())
+	defer file.Close()
+
+	commit := generateRandomString(16)
+	branch := "master"
+	tag := "continuous-master"
+	owner := "d1vanov"
+	repo := "ciuploadtool"
+	repoSlug := owner + "/" + repo
+	isPullRequest := false
+
+	releaseSuffix := ""
+	releaseBody := ""
+
+	for i := 0; i < 2; i++ {
+		if i == 0 {
+			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
+			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+		} else {
+			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
+			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
+				os.Getenv("APPVEYOR_BUILD_VERSION")
+		}
+
+		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), []string{file.Name()},
+			releaseSuffix, releaseBody)
+		if err != nil {
+			t.Fatalf("Failed to upload the single binary: %v", err)
+		}
+
+		tstClient, ok := client.(*TstClient)
+		if !ok {
+			t.Fatalf("Failed to cast the client to TstClient: %v", err)
+		}
+
+		if len(tstClient.releases) != 1 {
+			t.Fatalf("Uploading single binary to new release failed: no releases within the returned client")
+		}
+	}
+}
+
 func setupSampleAssetFile(filename, content string) (*os.File, error) {
 	file, err := ioutil.TempFile("", "singleUploadedBinary.txt")
 	if err != nil {

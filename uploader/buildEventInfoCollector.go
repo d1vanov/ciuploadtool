@@ -80,8 +80,14 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 		return nil, nil
 	}
 
-	if info.branch == "" {
+	if len(info.branch) == 0 {
+		fmt.Println("No branch info was found, fallback to \"master\"")
 		info.branch = "master"
+	}
+
+	if len(info.tag) == 0 {
+		fmt.Printf("No tag info was found, fallback to %q\n", info.branch)
+		info.tag = info.branch
 	}
 
 	fmt.Println("Commit: ", info.commit)
