@@ -96,11 +96,7 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 	info.owner = repoSlugSplitted[0]
 	info.repo = repoSlugSplitted[1]
 
-	if len(releaseSuffix) == 0 || releaseSuffix == info.tag {
-		if len(info.tag) == 0 {
-			fmt.Printf("No tag info was found, fallback to %q\n", info.branch)
-			info.tag = info.branch
-		}
+	if len(info.tag) != 0 && !strings.HasPrefix(info.tag, "continuous") && (len(releaseSuffix) == 0 || releaseSuffix == info.tag) {
 		info.releaseTitle = "Release build (" + info.tag + ")"
 	} else if len(releaseSuffix) != 0 {
 		fmt.Printf("Suffix = %s\n", releaseSuffix)
