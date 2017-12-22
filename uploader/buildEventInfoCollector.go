@@ -85,11 +85,6 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 		info.branch = "master"
 	}
 
-	if len(info.tag) == 0 {
-		fmt.Printf("No tag info was found, fallback to %q\n", info.branch)
-		info.tag = info.branch
-	}
-
 	fmt.Println("Commit: ", info.commit)
 
 	repoSlugSplitted := strings.Split(repoSlug, "/")
@@ -102,6 +97,10 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 	info.repo = repoSlugSplitted[1]
 
 	if len(releaseSuffix) == 0 || releaseSuffix == info.tag {
+		if len(info.tag) == 0 {
+			fmt.Printf("No tag info was found, fallback to %q\n", info.branch)
+			info.tag = info.branch
+		}
 		info.releaseTitle = "Release build (" + info.tag + ")"
 	} else if len(releaseSuffix) != 0 {
 		fmt.Printf("Suffix = %s\n", releaseSuffix)
