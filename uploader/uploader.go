@@ -105,9 +105,8 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 		if err != nil {
 			return client, err
 		}
-		fmt.Printf("Updated build log within the release body: %+v\n", release)
 	} else {
-		fmt.Printf("Created release: %+v\n", release)
+		fmt.Println("Created new release")
 	}
 
 	for _, filename := range commandLineFiles(filenames) {

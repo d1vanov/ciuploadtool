@@ -14,9 +14,12 @@ func main() {
 	var releaseBody string
 	flag.StringVar(&releaseBody, "relbody", "", "Optional content for the body of created releases")
 
+	var prepareOnly bool
+	flag.BoolVar(&prepareOnly, "preponly", false, "Specify this flag and no artifacts for uploading to prepare the release for binaries uploading")
+
 	flag.Parse()
 
-	if flag.NArg() < 1 {
+	if !prepareOnly && flag.NArg() < 1 {
 		fmt.Printf("Usage: %s [-suffix=<suffix for continuous release names>] [-relbody=<release body message>] <files to upload>\n", os.Args[0])
 		os.Exit(-1)
 	}
