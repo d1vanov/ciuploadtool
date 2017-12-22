@@ -10,8 +10,11 @@ environment:
   auth_token:
     secure: bFPozfVngJ8Gonjmldc8N5leBx7PxwwYIqnK/bpSsPVUYqEYHafBBQRwrtdL+oc9
   matrix:
-    - platform: x86
-    - platform: x64
+    - prepare_mode: YES
+    - prepare_mode: NO
+      platform: x86
+    - prepare_mode: NO
+      platform: x64
 
 clone_folder: c:\gopath\src\github.com\d1vanov\ciuploadtool
 
@@ -26,9 +29,9 @@ install:
 build_script:
   - go build
   - go test github.com/d1vanov/ciuploadtool/uploader
-  - for /f "tokens=*" %%a in ('ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" -preponly') do set CIUPLOADTOOL_OUTPUT=%%a & echo %%a
-  - echo %CIUPLOADTOOL_OUTPUT%
-  - ps: if ($env:CIUPLOADTOOL_OUTPUT -eq "Created new release") { throw "New build was queued, failing early." }
+  - if %prepare_mode%==YES for /f "tokens=*" %%a in ('ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" -preponly') do echo %%a & set CIUPLOADTOOL_OUTPUT=%%a
+  - if %prepare_mode%==YES echo %CIUPLOADTOOL_OUTPUT%
+  - ps: if ($env:prepare_mode -eq "YES" -and $env:CIUPLOADTOOL_OUTPUT -eq "Created new release") { throw "New build was queued, failing early." }
   - set CIUPLOADTOOL_ARCHIVE_NAME=ciuploadtool_windows_%platform%.zip
   - 7z a %CIUPLOADTOOL_ARCHIVE_NAME% ciuploadtool.exe
 
@@ -38,3 +41,7 @@ artifacts:
 
 on_finish:
   - ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" "%CIUPLOADTOOL_ARCHIVE_NAME%"
+
+matrix:
+  allow_failures:
+    - prepare_mode: YES
