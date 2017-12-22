@@ -24,7 +24,14 @@ func main() {
 		os.Exit(-1)
 	}
 
-	err := uploader.Upload(flag.Args(), releaseSuffix, releaseBody)
+	var err error
+	if prepareOnly {
+		fmt.Println("Prepare only flag is active, won't upload any real binaries, will just prepare the release")
+		err = uploader.Upload([]string{}, releaseSuffix, releaseBody)
+	} else {
+		err = uploader.Upload(flag.Args(), releaseSuffix, releaseBody)
+	}
+
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
