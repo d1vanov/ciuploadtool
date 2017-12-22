@@ -57,30 +57,81 @@ and upload the specified binaries there. Here are the necessary setup steps:
     environment:
       auth_token:
         secure: <your encrypted token> # your encrypted token from GitHub
+      matrix:
+        - prepare_mode: YES
+        # other matrix branches are your builds: simply append prepare_mode: NO to them
+        - prepare_mode: NO
+          platform: x86
+        - prepare_mode: NO
+          platform: x64
+
+    install:
+      - md c:\ciuploadtool
+      - cd c:\ciuploadtool
+      - curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
+      - 7z x ciuploadtool_windows_x86.zip
+      - <the rest of your install section goes here>
+
+    build_script:
+      - if %prepare_mode%==YES c:\ciuploadtool\ciuploadtool.exe -preponly
+      - ps: if ($env:prepare_mode -eq "YES") { throw "Failing in order to stop the current build matrix job early" }
+      - <the rest of your build script goes here>
 
     on_finish:
       - dir /s out\ # Assuming you have some artifacts in out that you would like to upload
-      - curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
-      - 7z x ciuploadtool_windows_x86.zip
-      - ciuploadtool out\*
+      - c:\ciuploadtool\ciuploadtool.exe out\*
 
     branches:
       except:
         - # Do not build tags that we create when we upload to GitHub Releases
         - /^(?i:continuous)$/
+
+    matrix:
+      allow_failures:
+        - prepare_mode: YES
 ```
 
 Note that `ciuploadtool` replaces the normal deployment step for AppVeyor CI, so if you have deployment set up for GitHub,
-you should just remove it to prevent the conflicts between AppVeyor's built-in deployment processing and the tool's job.
+you should just remove it to prevent conflicts and/or races between AppVeyor's built-in deployment processing and the tool's job.
 
-Another helpful tip for AppVeyor is to enable [rolling builds](https://www.appveyor.com/docs/build-configuration/#rolling-builds)
+Also note the tricky setup for AppVeyor's build matrices. The explanation for this trickery is as follows: when the build is
+triggered by new commit(s), the tool deletes any previous continuous release which target commit mismatches the latest pushed
+commit and creates a new release instead. The creation of a release involves the creation of a tag and apparently AppVeyor CI,
+unlike Travis CI, reacts on the creation of a new tag *during* the CI build. Without special tricks that would lead to
+duplicate builds performed by AppVeyor CI: first it would build things for the new commit, then as a part of binaries uploading
+process `ciuploadtool` would create a new tag for the new continuous release and AppVeyor would schedule another build.
+This build would be pretty useless because it would correspond to the very same version of the source code so running that
+build would simply waste AppVeyor CI resources and your time.
+
+So here's what's done to prevent such situation: `ciuploadtool` accepts `-preponly` flag which makes the tool perform
+all the necessary GitHub release preparation for binaries uploading but without actual binaries uploading. In this mode
+the tool would ensure the continuous release's target commit corresponds to the latest pushed commit and if it's not so,
+the tool deletes the existing release and creates a new one. The creation of a new release involves the creation of the
+continuous tag for this release as well and that is what triggers AppVeyor CI to schedule another build. So we do the following:
+
+ * Do this release preparation before any actual build
+ * Do this release preparation in a separate matrix branch
+ * Use special trick to force this separate matrix branch job to fail so that it's guaranteed to finish quickly. For that reason we also have `allow_failures` section in the above example.
+
+One other thing necessary for this whole workaround to work is to enable [rolling builds](https://www.appveyor.com/docs/build-configuration/#rolling-builds)
 in your project's settings by toggling the checkbox at `https://ci.appveyor.com/project/yourusername/yourrepository/settings`.
-The reason to do this is the fact that `ciuploadtool` *might* create a new tag and that by default triggers new build at AppVeyor.
-Without rolling builds enabled, you would do two identical builds instead of one - one for commit and one for tag created by the tool
-during the commit build. With rolling builds the build which created the new tag would be auto-cancelled in favour of the new build
-for the tag.
+The feature would cancel the current build if the new one was scheduled. So the first branch of your build matrix would
+run `ciuploadtool` in preparation mode, that would create a new tag which would cause the scheduling of a new build. That job
+would then quickly fail (because we specifically make it so) but as long as this build matrix branch allows for failures,
+AppVeyor CI won't panic and e-mail you about the broken build. Instead it would just silently cancel the rest of the build matrix's
+jobs (due to rolling builds feature) and will switch to the newly scheduled build. That newly scheduled build won't cause
+the recreation of a tag because the existing release's target commit would match the expected one - so first build matrix's
+branch would do nothing and silently fail and the rest of build matrix's jobs would actually build your project and upload
+the binaries to the GitHub release.
 
 ## Advanced usage
+
+The tool accepts several input parameters which can be used to fine-tune its behaviour. For example, you might want to
+differentiate the continuous builds between stable (master branch) and unstable (development branch) builds. This can be done
+by adjusting the name of the tag used for continuous builds: `ciuploadtool` accepts input flag `suffix` which can be set equal
+to the branch name so builds from master branch would produce continuous release tagged with `continuous-master` tag and
+builds from development branch would produce continuous release tagged with `continuous-development` tag. Here's the example
+configuration for Travis CI:
 
 The tool accepts a couple of input parameters which can be used to fine-tune its behaviour. For example, you might want to
 differentiate the continuous builds between stable (master branch) and unstable (development branch) builds. This can be done
@@ -120,18 +171,39 @@ The analog of such configuration for AppVeyor CI:
     environment:
       auth_token:
         secure: <your encrypted token> # your encrypted token from GitHub
+      matrix:
+        - prepare_mode: YES
+        # other matrix branches are your builds: simply append prepare_mode: NO to them
+        - prepare_mode: NO
+          platform: x86
+        - prepare_mode: NO
+          platform: x64
+
+    install:
+      - md c:\ciuploadtool
+      - cd c:\ciuploadtool
+      - curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
+      - 7z x ciuploadtool_windows_x86.zip
+      - <the rest of your install section goes here>
+
+    build_script:
+      - if %prepare_mode%==YES c:\ciuploadtool\ciuploadtool.exe -preponly -suffix="%APPVEYOR_REPO_BRANCH%"
+      - ps: if ($env:prepare_mode -eq "YES") { throw "Failing in order to stop the current build matrix job early" }
+      - <the rest of your build script goes here>
 
     on_finish:
       - dir /s out\ # Assuming you have some artifacts in out that you would like to upload
-      - curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
-      - 7z x ciuploadtool_windows_x86.zip
-      - ciuploadtool -suffix="%APPVEYOR_REPO_BRANCH%" out\*
+      - c:\ciuploadtool\ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" out\*
 
     branches:
       only:
         - master
         - development
         - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+
+    matrix:
+      allow_failures:
+        - prepare_mode: YES
 ```
 
 Note also that this scheme uses one subtle particularity of both Travis CI and AppVeyor CI: `TRAVIS_BRANCH` and `APPVEYOR_REPO_BRANCH`
@@ -141,16 +213,17 @@ builds with branch names set to the name of the pushed tag; `ciuploadtool` check
 match the name of the pushed tag (if any) and if so, it creates a non-continuous release to which the specified binaries are uploaded
 in precisely the same way as for continuous builds.
 
-And the last note is about the processing of binaries produces by different branches of the build matrix: you can upload binaries for each
-branch of the build matrix thus providing your users with freedom to choose the build to download builds among several different ones -
+And the last note is about the processing of binaries produced by different branches of the build matrix: you can upload binaries for each
+branch of the build matrix thus providing your users with freedom to choose the build to download builds among several available ones -
 either built using different toolset or built in different configurations etc. `ciuploadtool` associates the releases it creates
 with commits so it won't create more than one release for the given commit. All the specified binaries from all builds corresponding
-to the release would be uploaded to that single release. That has one particularity: you better configure the names of the binaries you upload
-to not be different between different builds corresponding to the same commit. For example, you would violate this rule if you make the name
+to the release would be uploaded to that single release. That has one particularity: **you better configure the names of the binaries you upload
+to NOT be different between different builds corresponding to the same commit**. For example, you would violate this rule if you make the name
 of your uploadable binary contain `APPVEYOR_BUILD_ID` which is the id of AppVeyor build job different for each build or `APPVEYOR_BUILD_NUMBER`
 which is incremented with each consequent build, regardless of which commits it corresponds to. If you make the names of your binaries different
-for each build **and** repeat builds for the same commit multiple times (both Travis CI and AppVeyor allow to do that), `ciuploadtool` would
-attach more and more binaries with different names to the release. However, if you binaries have names corresponding to commits insteaf of
-build job ids or numbers, `ciuploadtool` would replace the older binaries, if they were attached to the given release previously, with newer ones.
+for each build **and** repeat builds for the same commit multiple times (both Travis CI and AppVeyor allow to trigger builds for the same commit
+multiple times), `ciuploadtool` would attach more and more binaries with different names to the same release. However, if you binaries have names
+corresponding to commits insteaf of build job ids or numbers, `ciuploadtool` would replace the older binaries, if they were attached
+to the given release previously, with newer ones.
 
 You can check out [this test project](https://github.com/d1vanov/ciuploadtool-testing) used for testing of `ciuploadtool` and see how things are organized there.
