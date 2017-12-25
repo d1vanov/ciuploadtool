@@ -25,6 +25,7 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 	}
 
 	if info == nil {
+		fmt.Println("No build event info, won't do anything")
 		return nil, nil
 	}
 

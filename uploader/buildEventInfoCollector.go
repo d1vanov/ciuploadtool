@@ -43,6 +43,7 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 
 	if info.token == "" {
 		if isAppVeyor {
+			fmt.Println("No dev token for AppVeyor CI job, won't do anything")
 			// This happens in AppVeyor CI on pull request builds, will silently
 			// ignore that
 			return nil, nil
