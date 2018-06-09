@@ -17,6 +17,12 @@ func main() {
 	var prepareOnly bool
 	flag.BoolVar(&prepareOnly, "preponly", false, "Specify this flag and no artifacts for uploading to prepare the release for binaries uploading")
 
+	var useGitLab bool
+	flag.BoolVar(&useGitLab, "gitlab", false, "Upload built artifacts to GitLab repository instead of GitHub one")
+
+	var repoSlug string
+	flag.StringVar(&repoSlug, "reposlug", "", "Target repository owner/project, extracted from environment variables if not set explicitly")
+
 	flag.Parse()
 
 	if !prepareOnly && flag.NArg() < 1 {
@@ -27,9 +33,9 @@ func main() {
 	var err error
 	if prepareOnly {
 		fmt.Println("Prepare only flag is active, won't upload any real binaries, will just prepare the release")
-		err = uploader.Upload([]string{}, releaseSuffix, releaseBody)
+		err = uploader.Upload([]string{}, useGitLab, repoSlug, releaseSuffix, releaseBody)
 	} else {
-		err = uploader.Upload(flag.Args(), releaseSuffix, releaseBody)
+		err = uploader.Upload(flag.Args(), useGitLab, repoSlug, releaseSuffix, releaseBody)
 	}
 
 	if err != nil {

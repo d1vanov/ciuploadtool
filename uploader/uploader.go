@@ -12,14 +12,30 @@ type clientFactoryFunc func(gitHubToken string, owner string, repo string) Clien
 
 type releaseFactoryFunc func(releaseBody string, info *buildEventInfo) Release
 
-func Upload(filenames []string, releaseSuffix string, releaseBody string) error {
-	_, err := uploadImpl(clientFactoryFunc(newGitHubClient), newGitHubRelease, filenames, releaseSuffix, releaseBody)
+type uploadArgs struct {
+	clientFactory  clientFactoryFunc
+	releaseFactory releaseFactoryFunc
+	filenames      []string
+	releaseSuffix  string
+	releaseBody    string
+	useGitLab      bool
+	repoSlug       string
+}
+
+func Upload(filenames []string, useGitLab bool, repoSlug string, releaseSuffix string, releaseBody string) error {
+	var args uploadArgs
+	args.clientFactory = clientFactoryFunc(newGitHubClient)
+	args.releaseFactory = newGitHubRelease
+	args.filenames = filenames
+	args.releaseSuffix = releaseSuffix
+	args.releaseBody = releaseBody
+	_, err := uploadImpl(&args)
 	return err
 }
 
-func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFunc, filenames []string, releaseSuffix string, releaseBody string) (Client, error) {
+func uploadImpl(args *uploadArgs) (Client, error) {
 	// Collect the information about the current build event
-	info, err := collectBuildEventInfo(releaseSuffix)
+	info, err := collectBuildEventInfo(args)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +45,7 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 		return nil, nil
 	}
 
-	client := clientFactory(info.token, info.owner, info.repo)
+	client := args.clientFactory(info.token, info.owner, info.repo)
 
 	// Check whether the release corresponding to the tag already exists
 	releaseExists := false
@@ -81,7 +97,7 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 
 	if !releaseExists {
 		fmt.Println("Creating new release")
-		release, response, err = client.CreateRelease(releaseFactory(releaseBody, info))
+		release, response, err = client.CreateRelease(args.releaseFactory(args.releaseBody, info))
 	} else {
 		existingReleaseAssets, response, err = client.ListReleaseAssets(release.GetID())
 	}
@@ -110,7 +126,7 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 		fmt.Println("Created new release")
 	}
 
-	for _, filename := range commandLineFiles(filenames) {
+	for _, filename := range commandLineFiles(args.filenames) {
 		file, err := os.Open(filename)
 		if err != nil {
 			return client, err

@@ -21,7 +21,7 @@ type buildEventInfo struct {
 	buildId       string
 }
 
-func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
+func collectBuildEventInfo(args *uploadArgs) (*buildEventInfo, error) {
 	// Check whether the app is run during Travis CI or AppVeyor CI build
 	appVeyorEnvVar := os.Getenv("APPVEYOR")
 	travisCiEnvVar := os.Getenv("TRAVIS")
@@ -97,11 +97,11 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 	info.owner = repoSlugSplitted[0]
 	info.repo = repoSlugSplitted[1]
 
-	if len(info.tag) != 0 && !strings.HasPrefix(info.tag, "continuous") && (len(releaseSuffix) == 0 || releaseSuffix == info.tag) {
+	if len(info.tag) != 0 && !strings.HasPrefix(info.tag, "continuous") && (len(args.releaseSuffix) == 0 || args.releaseSuffix == info.tag) {
 		info.releaseTitle = "Release build (" + info.tag + ")"
-	} else if len(releaseSuffix) != 0 {
-		fmt.Printf("Suffix = %s\n", releaseSuffix)
-		info.tag = "continuous-" + releaseSuffix
+	} else if len(args.releaseSuffix) != 0 {
+		fmt.Printf("Suffix = %s\n", args.releaseSuffix)
+		info.tag = "continuous-" + args.releaseSuffix
 		info.releaseTitle = "Continuous build (" + info.tag + ")"
 		info.isPrerelease = true
 	} else {

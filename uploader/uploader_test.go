@@ -206,6 +206,10 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	releaseSuffix := "master"
 	releaseBody := "Continuous release"
 
+	var args uploadArgs
+	args.releaseSuffix = releaseSuffix
+	args.releaseBody = releaseBody
+
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
@@ -217,7 +221,7 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+			info, err := collectBuildEventInfo(args)
 			if err != nil {
 				panic(err)
 			}
@@ -300,6 +304,9 @@ func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) 
 	releaseSuffix := "master"
 	releaseBody := ""
 
+	var args uploadArgs
+	args.releaseSuffix = releaseSuffix
+
 	filenames := make([]string, 0, 3)
 	filenames = append(filenames, firstFile.Name())
 	filenames = append(filenames, secondFile.Name())
@@ -316,7 +323,7 @@ func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) 
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+			info, err := collectBuildEventInfo(args)
 			if err != nil {
 				panic(err)
 			}
@@ -395,6 +402,10 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	releaseSuffix := "master"
 	releaseBody := "Continuous release"
 
+	var args uploadArgs
+	args.releaseSuffix = releaseSuffix
+	args.releaseBody = releaseBody
+
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
@@ -406,7 +417,7 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+			info, err := collectBuildEventInfo(args)
 			if err != nil {
 				panic(err)
 			}
@@ -991,6 +1002,10 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	releaseSuffix := "master"
 	releaseBody := ""
 
+	var args uploadArgs
+	args.releaseSuffix = releaseSuffix
+	args.releaseBody = releaseBody
+
 	client := TstClient{}
 
 	for i := 0; i < 2; i++ {
@@ -1004,7 +1019,7 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 		}
 
 		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			_, err := collectBuildEventInfo(releaseSuffix)
+			_, err := collectBuildEventInfo(args)
 			if err != nil {
 				panic(err)
 			}
