@@ -13,15 +13,14 @@ type Client interface {
 	GetReleaseByTag(tagName string) (Release, Response, error)
 	CreateRelease(release Release) (Release, Response, error)
 	UpdateRelease(release Release) (Release, Response, error)
-	DeleteRelease(releaseId int) (Response, error)
+	DeleteRelease(release Release) (Response, error)
 	DeleteTag(tagName string) (Response, error)
-	ListReleaseAssets(releaseId int) ([]ReleaseAsset, Response, error)
-	DeleteReleaseAsset(assetId int) (Response, error)
-	UploadReleaseAsset(releaseId int, assetName string, assetFile *os.File) (ReleaseAsset, Response, error)
+	ListReleaseAssets(release Release) ([]ReleaseAsset, Response, error)
+	DeleteReleaseAsset(asset ReleaseAsset) (Response, error)
+	UploadReleaseAsset(release Release, assetName string, assetFile *os.File) (ReleaseAsset, Response, error)
 }
 
 type Release interface {
-	GetID() int
 	GetName() string
 	GetBody() string
 	SetBody(body string)
@@ -41,6 +40,6 @@ type Response interface {
 }
 
 type ReleaseAsset interface {
-	GetID() int
+	GetTagName() string
 	GetName() string
 }

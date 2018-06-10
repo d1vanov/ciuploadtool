@@ -28,7 +28,8 @@ type GitHubRelease struct {
 }
 
 type GitHubReleaseAsset struct {
-	asset *github.ReleaseAsset
+	asset   *github.ReleaseAsset
+	tagName string
 }
 
 func newGitHubClient(gitHubToken string, owner string, repo string) Client {
@@ -87,15 +88,15 @@ func (client GitHubClient) UpdateRelease(release Release) (Release, Response, er
 		return GitHubRelease{}, GitHubResponse{}, errors.New("GitHub client is nil")
 	}
 	gitHubRelease, gitHubResponse, err := client.client.Repositories.EditRelease(client.ctx, client.owner, client.repo,
-		release.GetID(), release.(GitHubRelease).release)
+		release.(GitHubRelease).release.GetID(), release.(GitHubRelease).release)
 	return GitHubRelease{release: gitHubRelease}, GitHubResponse{response: gitHubResponse}, err
 }
 
-func (client GitHubClient) DeleteRelease(releaseId int) (Response, error) {
+func (client GitHubClient) DeleteRelease(release Release) (Response, error) {
 	if client.client == nil {
 		return GitHubResponse{}, errors.New("GitHub client is nil")
 	}
-	gitHubResponse, err := client.client.Repositories.DeleteRelease(client.ctx, client.owner, client.repo, releaseId)
+	gitHubResponse, err := client.client.Repositories.DeleteRelease(client.ctx, client.owner, client.repo, release.(GitHubRelease).release.GetID())
 	return GitHubResponse{response: gitHubResponse}, err
 }
 
@@ -117,37 +118,49 @@ func (client GitHubClient) DeleteTag(tagName string) (Response, error) {
 	return GitHubResponse{response: &github.Response{gitHubResponse, 0, 0, 0, 0, github.Rate{}}}, err
 }
 
-func (client GitHubClient) ListReleaseAssets(releaseId int) ([]ReleaseAsset, Response, error) {
+func (client GitHubClient) ListReleaseAssets(release Release) ([]ReleaseAsset, Response, error) {
 	if client.client == nil {
 		return nil, GitHubResponse{}, errors.New("GitHub client is nil")
 	}
+	gitHubRelease := release.(GitHubRelease)
+	if gitHubRelease.release == nil {
+		return nil, GitHubResponse{}, errors.New("GitHub release is nil")
+	}
 	gitHubReleaseAssets, gitHubResponse, err := client.client.Repositories.ListReleaseAssets(client.ctx, client.owner,
-		client.repo, releaseId, nil)
+		client.repo, gitHubRelease.release.GetID(), nil)
 	releaseAssets := make([]ReleaseAsset, 0, len(gitHubReleaseAssets))
 	for _, gitHubReleaseAsset := range gitHubReleaseAssets {
-		releaseAssets = append(releaseAssets, GitHubReleaseAsset{asset: gitHubReleaseAsset})
+		releaseAssets = append(releaseAssets, GitHubReleaseAsset{asset: gitHubReleaseAsset, tagName: release.GetTagName()})
 	}
 	return releaseAssets, GitHubResponse{response: gitHubResponse}, err
 }
 
-func (client GitHubClient) DeleteReleaseAsset(assetId int) (Response, error) {
+func (client GitHubClient) DeleteReleaseAsset(asset ReleaseAsset) (Response, error) {
 	if client.client == nil {
 		return GitHubResponse{}, errors.New("GitHub client is nil")
 	}
-	gitHubResponse, err := client.client.Repositories.DeleteReleaseAsset(client.ctx, client.owner, client.repo, assetId)
+	gitHubReleaseAsset := asset.(GitHubReleaseAsset)
+	if gitHubReleaseAsset.asset == nil {
+		return GitHubResponse{}, errors.New("GitHub asset is nil")
+	}
+	gitHubResponse, err := client.client.Repositories.DeleteReleaseAsset(client.ctx, client.owner, client.repo, gitHubReleaseAsset.asset.GetID())
 	return GitHubResponse{response: gitHubResponse}, err
 }
 
-func (client GitHubClient) UploadReleaseAsset(releaseId int, assetName string,
+func (client GitHubClient) UploadReleaseAsset(release Release, assetName string,
 	assetFile *os.File) (ReleaseAsset, Response, error) {
 	if client.client == nil {
 		return GitHubReleaseAsset{}, GitHubResponse{}, errors.New("GitHub client is nil")
 	}
+	gitHubRelease := release.(GitHubRelease)
+	if gitHubRelease.release == nil {
+		return GitHubReleaseAsset{}, GitHubResponse{}, errors.New("GitHub release is nil")
+	}
 	var options github.UploadOptions
 	options.Name = assetName
 	gitHubReleaseAsset, gitHubResponse, err := client.client.Repositories.UploadReleaseAsset(client.ctx, client.owner,
-		client.repo, releaseId, &options, assetFile)
-	return GitHubReleaseAsset{asset: gitHubReleaseAsset}, GitHubResponse{response: gitHubResponse}, err
+		client.repo, gitHubRelease.release.GetID(), &options, assetFile)
+	return GitHubReleaseAsset{asset: gitHubReleaseAsset, tagName: release.GetTagName()}, GitHubResponse{response: gitHubResponse}, err
 }
 
 func (response GitHubResponse) Check() error {
@@ -192,13 +205,6 @@ func (response GitHubResponse) CloseBody() {
 		return
 	}
 	response.response.Body.Close()
-}
-
-func (release GitHubRelease) GetID() int {
-	if release.release == nil {
-		return 0
-	}
-	return release.release.GetID()
 }
 
 func (release GitHubRelease) GetName() string {
@@ -261,16 +267,13 @@ func (release GitHubRelease) GetAssets() []ReleaseAsset {
 	}
 	assets := make([]ReleaseAsset, 0, len(release.release.Assets))
 	for _, gitHubReleaseAsset := range release.release.Assets {
-		assets = append(assets, GitHubReleaseAsset{asset: &gitHubReleaseAsset})
+		assets = append(assets, GitHubReleaseAsset{asset: &gitHubReleaseAsset, tagName: release.GetTagName()})
 	}
 	return assets
 }
 
-func (releaseAsset GitHubReleaseAsset) GetID() int {
-	if releaseAsset.asset == nil {
-		return 0
-	}
-	return releaseAsset.asset.GetID()
+func (releaseAsset GitHubReleaseAsset) GetTagName() string {
+	return releaseAsset.tagName
 }
 
 func (releaseAsset GitHubReleaseAsset) GetName() string {

@@ -74,7 +74,7 @@ func uploadImpl(args *uploadArgs) (Client, error) {
 			fmt.Printf("Found existing release but its commit SHA doesn't match the current one: %s vs %s\n", info.commit, targetCommitish)
 			fmt.Printf("Deleting the existing release to recreate it with the current commit SHA %s\n", info.commit)
 
-			response, err = client.DeleteRelease(release.GetID())
+			response, err = client.DeleteRelease(release)
 			response.CloseBody()
 			if err != nil {
 				return client, err
@@ -99,7 +99,7 @@ func uploadImpl(args *uploadArgs) (Client, error) {
 		fmt.Println("Creating new release")
 		release, response, err = client.CreateRelease(args.releaseFactory(args.releaseBody, info))
 	} else {
-		existingReleaseAssets, response, err = client.ListReleaseAssets(release.GetID())
+		existingReleaseAssets, response, err = client.ListReleaseAssets(release)
 	}
 
 	response.CloseBody()
@@ -146,15 +146,12 @@ func uploadImpl(args *uploadArgs) (Client, error) {
 
 		if existingReleaseAssets != nil {
 			for i, existingReleaseAsset := range existingReleaseAssets {
-				if existingReleaseAsset.GetID() == 0 {
-					continue
-				}
 				if len(existingReleaseAsset.GetName()) == 0 {
 					continue
 				}
 				if existingReleaseAsset.GetName() == filepath.Base(filename) {
 					fmt.Printf("Found duplicate release asset %s, deleting it\n", existingReleaseAsset.GetName())
-					response, err = client.DeleteReleaseAsset(existingReleaseAsset.GetID())
+					response, err = client.DeleteReleaseAsset(existingReleaseAsset)
 					response.CloseBody()
 					if err != nil {
 						return client, err
@@ -172,7 +169,7 @@ func uploadImpl(args *uploadArgs) (Client, error) {
 
 		fmt.Printf("Trying to upload file: %s\n", filename)
 
-		asset, response, err := client.UploadReleaseAsset(release.GetID(), filepath.Base(filename), file)
+		asset, response, err := client.UploadReleaseAsset(release, filepath.Base(filename), file)
 		response.CloseBody()
 		if err != nil {
 			return client, err

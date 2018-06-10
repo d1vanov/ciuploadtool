@@ -10,14 +10,6 @@ import (
 	"os"
 )
 
-var lastFreeReleaseAssetId int
-var lastFreeReleaseId int
-
-func init() {
-	lastFreeReleaseAssetId = 1
-	lastFreeReleaseId = 1
-}
-
 type TstClient struct {
 	token    string
 	owner    string
@@ -33,7 +25,6 @@ type TstResponse struct {
 }
 
 type TstRelease struct {
-	id              int
 	name            string
 	body            string
 	tagName         string
@@ -44,7 +35,7 @@ type TstRelease struct {
 }
 
 type TstReleaseAsset struct {
-	id      int
+	tagName string
 	name    string
 	content string
 }
@@ -55,7 +46,6 @@ func newTstClient(gitHubToken string, owner string, repo string) Client {
 
 func newTstRelease(releaseBody string, info *buildEventInfo) Release {
 	release := TstRelease{
-		id:              lastFreeReleaseId,
 		name:            info.releaseTitle,
 		body:            releaseBody,
 		tagName:         info.tag,
@@ -63,7 +53,6 @@ func newTstRelease(releaseBody string, info *buildEventInfo) Release {
 		isDraft:         false,
 		isPrerelease:    info.isPrerelease,
 	}
-	lastFreeReleaseId++
 	return updateBuildLogWithinReleaseBody(&release, info)
 }
 
@@ -108,8 +97,6 @@ func (client *TstClient) CreateRelease(release Release) (Release, Response, erro
 	}
 
 	tstRelease := release.(*TstRelease)
-	tstRelease.id = lastFreeReleaseId
-	lastFreeReleaseId++
 	client.releases = append(client.releases, *tstRelease)
 
 	client.DeleteTag(tagName)
@@ -123,7 +110,7 @@ func (client *TstClient) UpdateRelease(release Release) (Release, Response, erro
 		return nil, TstResponse{statusCode: 401, status: "Bad credentials"}, errors.New("No GitHub token")
 	}
 	for i := range client.releases {
-		if client.releases[i].GetID() != release.GetID() {
+		if client.releases[i].GetTagName() != release.GetTagName() {
 			continue
 		}
 		client.releases[i] = *(release.(*TstRelease))
@@ -132,15 +119,15 @@ func (client *TstClient) UpdateRelease(release Release) (Release, Response, erro
 	return nil, TstResponse{statusCode: 404, status: "Not found"}, errors.New("Release matching by ID was not found")
 }
 
-func (client *TstClient) DeleteRelease(releaseId int) (Response, error) {
+func (client *TstClient) DeleteRelease(release Release) (Response, error) {
 	if len(client.token) == 0 {
 		return TstResponse{statusCode: 401, status: "Bad credentials"}, errors.New("No GitHub token")
 	}
 	if len(client.releases) == 0 {
 		return TstResponse{statusCode: 204, status: "No content"}, errors.New("No releases within client")
 	}
-	for i, release := range client.releases {
-		if release.GetID() == releaseId {
+	for i, currentRelease := range client.releases {
+		if currentRelease.GetTagName() == release.GetTagName() {
 			client.releases = append(client.releases[:i], client.releases[i+1:]...)
 			return TstResponse{statusCode: 200, status: "Deleted"}, nil
 		}
@@ -164,22 +151,22 @@ func (client *TstClient) DeleteTag(tagName string) (Response, error) {
 	return TstResponse{statusCode: 404, status: "Not found"}, errors.New("Found no tag to delete")
 }
 
-func (client *TstClient) ListReleaseAssets(releaseId int) ([]ReleaseAsset, Response, error) {
+func (client *TstClient) ListReleaseAssets(release Release) ([]ReleaseAsset, Response, error) {
 	if len(client.token) == 0 {
 		return nil, TstResponse{statusCode: 401, status: "Bad credentials"}, errors.New("No GitHub token")
 	}
 	if len(client.releases) == 0 {
 		return nil, TstResponse{statusCode: 404, status: "Not found"}, errors.New("No releases within client")
 	}
-	for _, release := range client.releases {
-		if release.GetID() == releaseId {
-			return release.GetAssets(), TstResponse{statusCode: 200, status: "Found"}, nil
+	for _, currentRelease := range client.releases {
+		if currentRelease.GetTagName() == release.GetTagName() {
+			return currentRelease.GetAssets(), TstResponse{statusCode: 200, status: "Found"}, nil
 		}
 	}
-	return nil, TstResponse{statusCode: 404, status: "Not found"}, errors.New("Release with given id was not found")
+	return nil, TstResponse{statusCode: 404, status: "Not found"}, errors.New("Release was not found")
 }
 
-func (client *TstClient) DeleteReleaseAsset(assetId int) (Response, error) {
+func (client *TstClient) DeleteReleaseAsset(asset ReleaseAsset) (Response, error) {
 	if len(client.token) == 0 {
 		return TstResponse{statusCode: 401, status: "Bad credentials"}, errors.New("No GitHub token")
 	}
@@ -187,26 +174,29 @@ func (client *TstClient) DeleteReleaseAsset(assetId int) (Response, error) {
 		return TstResponse{statusCode: 404, status: "Not found"}, errors.New("No releases within client")
 	}
 	for i := range client.releases {
-		for j, asset := range client.releases[i].GetAssets() {
-			if asset.GetID() == assetId {
+		for j, currentAsset := range client.releases[i].GetAssets() {
+			if currentAsset.GetTagName() != asset.GetTagName() {
+				continue
+			}
+			if currentAsset.GetName() == asset.GetName() {
 				client.releases[i].assets = append(client.releases[i].assets[:j], client.releases[i].assets[j+1:]...)
 				return TstResponse{statusCode: 200, status: "Deleted"}, nil
 			}
 		}
 	}
-	return TstResponse{statusCode: 404, status: "Not found"}, errors.New("Release containing the asset with given id was not found")
+	return TstResponse{statusCode: 404, status: "Not found"}, errors.New("Release containing the given asset was not found")
 }
 
-func (client *TstClient) UploadReleaseAsset(releaseId int, assetName string, assetFile *os.File) (ReleaseAsset, Response, error) {
+func (client *TstClient) UploadReleaseAsset(release Release, assetName string, assetFile *os.File) (ReleaseAsset, Response, error) {
 	if len(client.token) == 0 {
 		return TstReleaseAsset{}, TstResponse{statusCode: 401, status: "Bad credentials"}, errors.New("No GitHub token")
 	}
 	if len(client.releases) == 0 {
 		return TstReleaseAsset{}, TstResponse{statusCode: 404, status: "Not found"}, errors.New("No releases within client")
 	}
-	for i, release := range client.releases {
-		if release.GetID() == releaseId {
-			for _, asset := range release.GetAssets() {
+	for i, currentRelease := range client.releases {
+		if currentRelease.GetTagName() == release.GetTagName() {
+			for _, asset := range currentRelease.GetAssets() {
 				if asset.GetName() == assetName {
 					return TstReleaseAsset{}, TstResponse{statusCode: 400, status: "Release asset already exists"},
 						errors.New("Release asset with the given name already exists")
@@ -217,14 +207,13 @@ func (client *TstClient) UploadReleaseAsset(releaseId int, assetName string, ass
 				return TstReleaseAsset{}, TstResponse{statusCode: 400, status: "Failed to read the asset file's contents"},
 					fmt.Errorf("Failed to read the asset file's contents: %v", err)
 			}
-			asset := TstReleaseAsset{id: lastFreeReleaseAssetId, name: assetName, content: string(assetFileContent)}
-			lastFreeReleaseAssetId++
-			release.assets = append(release.assets, asset)
-			client.releases[i] = release
+			asset := TstReleaseAsset{tagName: release.GetTagName(), name: assetName, content: string(assetFileContent)}
+			currentRelease.assets = append(currentRelease.assets, asset)
+			client.releases[i] = currentRelease
 			return asset, TstResponse{statusCode: 200, status: "Uploaded"}, nil
 		}
 	}
-	return TstReleaseAsset{}, TstResponse{statusCode: 404, status: "Not found"}, errors.New("Release with given id was not found")
+	return TstReleaseAsset{}, TstResponse{statusCode: 404, status: "Not found"}, errors.New("Release was not found")
 }
 
 func (response TstResponse) Check() error {
@@ -247,10 +236,6 @@ func (response TstResponse) GetBody() io.ReadCloser {
 }
 
 func (response TstResponse) CloseBody() {
-}
-
-func (release *TstRelease) GetID() int {
-	return release.id
 }
 
 func (release *TstRelease) GetName() string {
@@ -289,8 +274,8 @@ func (release *TstRelease) GetAssets() []ReleaseAsset {
 	return assets
 }
 
-func (releaseAsset TstReleaseAsset) GetID() int {
-	return releaseAsset.id
+func (releaseAsset TstReleaseAsset) GetTagName() string {
+	return releaseAsset.tagName
 }
 
 func (releaseAsset TstReleaseAsset) GetName() string {
