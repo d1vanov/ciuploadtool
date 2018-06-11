@@ -151,7 +151,7 @@ func (client *TstClient) DeleteTag(tagName string) (Response, error) {
 	return TstResponse{statusCode: 404, status: "Not found"}, errors.New("Found no tag to delete")
 }
 
-func (client *TstClient) ListReleaseAssets(release Release) ([]ReleaseAsset, Response, error) {
+func (client *TstClient) ListReleaseAssets(tagName string) ([]ReleaseAsset, Response, error) {
 	if len(client.token) == 0 {
 		return nil, TstResponse{statusCode: 401, status: "Bad credentials"}, errors.New("No GitHub token")
 	}
@@ -159,7 +159,7 @@ func (client *TstClient) ListReleaseAssets(release Release) ([]ReleaseAsset, Res
 		return nil, TstResponse{statusCode: 404, status: "Not found"}, errors.New("No releases within client")
 	}
 	for _, currentRelease := range client.releases {
-		if currentRelease.GetTagName() == release.GetTagName() {
+		if currentRelease.GetTagName() == tagName {
 			return currentRelease.GetAssets(), TstResponse{statusCode: 200, status: "Found"}, nil
 		}
 	}

@@ -118,19 +118,26 @@ func (client GitHubClient) DeleteTag(tagName string) (Response, error) {
 	return GitHubResponse{response: &github.Response{gitHubResponse, 0, 0, 0, 0, github.Rate{}}}, err
 }
 
-func (client GitHubClient) ListReleaseAssets(release Release) ([]ReleaseAsset, Response, error) {
+func (client GitHubClient) ListReleaseAssets(tagName string) ([]ReleaseAsset, Response, error) {
 	if client.client == nil {
 		return nil, GitHubResponse{}, errors.New("GitHub client is nil")
 	}
-	gitHubRelease := release.(GitHubRelease)
-	if gitHubRelease.release == nil {
+	gitHubRelease, gitHubResponse, err := client.client.Repositories.GetReleaseByTag(client.ctx, client.owner, client.repo, tagName)
+	if err != nil {
+		return nil, GitHubResponse{}, err
+	}
+	err = GitHubResponse{response: gitHubResponse}.Check()
+	if err != nil {
+		return nil, GitHubResponse{response: gitHubResponse}, nil
+	}
+	if gitHubRelease == nil {
 		return nil, GitHubResponse{}, errors.New("GitHub release is nil")
 	}
 	gitHubReleaseAssets, gitHubResponse, err := client.client.Repositories.ListReleaseAssets(client.ctx, client.owner,
-		client.repo, gitHubRelease.release.GetID(), nil)
+		client.repo, gitHubRelease.GetID(), nil)
 	releaseAssets := make([]ReleaseAsset, 0, len(gitHubReleaseAssets))
 	for _, gitHubReleaseAsset := range gitHubReleaseAssets {
-		releaseAssets = append(releaseAssets, GitHubReleaseAsset{asset: gitHubReleaseAsset, tagName: release.GetTagName()})
+		releaseAssets = append(releaseAssets, GitHubReleaseAsset{asset: gitHubReleaseAsset, tagName: tagName})
 	}
 	return releaseAssets, GitHubResponse{response: gitHubResponse}, err
 }

@@ -99,7 +99,7 @@ func uploadImpl(args *uploadArgs) (Client, error) {
 		fmt.Println("Creating new release")
 		release, response, err = client.CreateRelease(args.releaseFactory(args.releaseBody, info))
 	} else {
-		existingReleaseAssets, response, err = client.ListReleaseAssets(release)
+		existingReleaseAssets, response, err = client.ListReleaseAssets(info.tag)
 	}
 
 	response.CloseBody()
