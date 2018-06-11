@@ -27,7 +27,7 @@ type Release interface {
 	GetTargetCommitish() string
 	GetDraft() bool
 	GetPrerelease() bool
-	GetAssets() []ReleaseAsset
+	GetAssets() ([]ReleaseAsset, error)
 }
 
 type Response interface {

@@ -71,7 +71,11 @@ func TestNewReleaseWithSingleUploadedBinary(t *testing.T) {
 		}
 
 		release := tstClient.releases[0]
-		assets := release.GetAssets()
+		assets, err := release.GetAssets()
+		if err != nil {
+			t.Fatalf("Failed to list release assets: %v", err)
+		}
+
 		if len(assets) != 1 {
 			t.Fatalf("Uploading single binary to new release failed: no assets within the release")
 		}
@@ -165,7 +169,11 @@ func TestNewReleaseWithSeveralUploadedBinaries(t *testing.T) {
 		}
 
 		release := tstClient.releases[0]
-		assets := release.GetAssets()
+		assets, err := release.GetAssets()
+		if err != nil {
+			t.Fatalf("Failed to list release assets: %v", err)
+		}
+
 		if len(assets) != 3 {
 			t.Fatalf("Uploading one of binaries to new release failed: wrong number of assets within the release")
 		}
@@ -265,7 +273,11 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 		}
 
 		release := tstClient.releases[0]
-		assets := release.GetAssets()
+		assets, err := release.GetAssets()
+		if err != nil {
+			t.Fatalf("Failed to list release assets: %v", err)
+		}
+
 		if len(assets) != 1 {
 			t.Fatalf("Uploading one of binaries to existing release failed: no assets within the release")
 		}
@@ -373,7 +385,11 @@ func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) 
 		}
 
 		release := tstClient.releases[0]
-		assets := release.GetAssets()
+		assets, err := release.GetAssets()
+		if err != nil {
+			t.Fatalf("Failed to list release assets: %v", err)
+		}
+
 		if len(assets) != 3 {
 			t.Fatalf("Uploading one of binaries to existing release failed: wrong number of assets within the release")
 		}
@@ -479,7 +495,11 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 		}
 
 		release := tstClient.releases[0]
-		assets := release.GetAssets()
+		assets, err := release.GetAssets()
+		if err != nil {
+			t.Fatalf("Failed to list release assets: %v", err)
+		}
+
 		if len(assets) != 1 {
 			t.Fatalf("Uploading single binary to existing release failed: no assets within the release")
 		}
@@ -602,7 +622,11 @@ func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testi
 		}
 
 		release := tstClient.releases[0]
-		assets := release.GetAssets()
+		assets, err := release.GetAssets()
+		if err != nil {
+			t.Fatalf("Failed to list release assets: %v", err)
+		}
+
 		if len(assets) != 3 {
 			t.Fatalf("Uploading one of binaries to existing release failed: no assets within the release")
 		}
@@ -757,7 +781,11 @@ func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(t *te
 		}
 
 		release := tstClient.releases[0]
-		assets := release.GetAssets()
+		assets, err := release.GetAssets()
+		if err != nil {
+			t.Fatalf("Failed to list release assets: %v", err)
+		}
+
 		if len(assets) != 5 {
 			t.Fatalf("Uploading one of binaries to existing release failed: wrong number of assets within the release")
 		}
@@ -980,7 +1008,11 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 
 		for _, tstRelease := range tstClient.releases {
 			var release Release = &tstRelease
-			assets := release.GetAssets()
+			assets, err := release.GetAssets()
+			if err != nil {
+				t.Fatalf("Failed to list release assets: %v", err)
+			}
+
 			if len(assets) != 1 {
 				t.Fatalf("Wrong number of assets within the release: want %d, have %d", 1, len(assets))
 			}
@@ -1101,7 +1133,11 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	}
 
 	release := client.releases[0]
-	assets := release.GetAssets()
+	assets, err := release.GetAssets()
+	if err != nil {
+		t.Fatalf("Failed to list release assets: %v", err)
+	}
+
 	if len(assets) != 2 {
 		t.Fatalf("Wrong number of assets within the release: want %d, have %d", 2, len(assets))
 	}

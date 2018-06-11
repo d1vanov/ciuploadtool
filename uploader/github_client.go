@@ -241,18 +241,18 @@ func (release GitHubRelease) GetPrerelease() bool {
 	return release.release.GetPrerelease()
 }
 
-func (release GitHubRelease) GetAssets() []ReleaseAsset {
+func (release GitHubRelease) GetAssets() ([]ReleaseAsset, error) {
 	if release.release == nil {
-		return nil
+		return nil, errors.New("GitHub client is nil")
 	}
 	if release.release.Assets == nil {
-		return nil
+		return nil, nil
 	}
 	assets := make([]ReleaseAsset, 0, len(release.release.Assets))
 	for _, gitHubReleaseAsset := range release.release.Assets {
 		assets = append(assets, GitHubReleaseAsset{asset: &gitHubReleaseAsset, tagName: release.GetTagName()})
 	}
-	return assets
+	return assets, nil
 }
 
 func (releaseAsset GitHubReleaseAsset) GetTagName() string {

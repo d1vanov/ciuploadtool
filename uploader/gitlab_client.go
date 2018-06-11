@@ -7,6 +7,8 @@ import (
 	"github.com/xanzy/go-gitlab"
 	"io"
 	"os"
+	"regexp"
+	"strings"
 )
 
 type GitLabClient struct {
@@ -28,6 +30,8 @@ type GitLabRelease struct {
 
 type GitLabReleaseAsset struct {
 	tagName string
+	uri     string
+	name    string
 }
 
 func newGitLabClient(gitLabToken string, owner string, repo string) Client {
@@ -232,12 +236,41 @@ func (release GitLabRelease) GetPrerelease() bool {
 	return release.isPrerelease
 }
 
-func (release GitLabRelease) GetAssets() []ReleaseAsset {
+func (release GitLabRelease) GetAssets() ([]ReleaseAsset, error) {
 	if release.release == nil {
-		return nil
+		return nil, errors.New("GitLab client is nil")
 	}
 	// TODO: parse the release's description and extract URLs of release assets from it
-	return nil
+	return nil, nil
+}
+
+func (release GitLabRelease) parseBodyToDescriptionAndAssets() ([]ReleaseAsset, string, error) {
+	if release.release == nil {
+		return nil, "", nil
+	}
+	body := release.GetBody()
+	downloadsString := "Downloads:"
+	downloadsIndex := strings.LastIndex(body, downloadsString)
+	if downloadsIndex < 0 {
+		return nil, body, nil
+	}
+	searchStartIndex := downloadsIndex + len(downloadsString)
+	searchRegexp := regexp.MustCompile("\\[(\\w+)\\]\\((w+)\\)")
+	submatches := searchRegexp.FindAllStringSubmatch(body[searchStartIndex:len(body)], -1)
+	if submatches == nil {
+		return nil, body[:downloadsIndex], nil
+	}
+
+	var assets []ReleaseAsset
+	for _, match := range submatches {
+		if len(match) != 2 {
+			err := fmt.Errorf("Can't parse downloads from release description: unexpected number of matches inside a submatch: %d", len(match))
+			return nil, "", err
+		}
+		assets = append(assets, GitLabReleaseAsset{tagName: release.GetTagName(), uri: match[1], name: match[0]})
+	}
+
+	return assets, body[:downloadsIndex], nil
 }
 
 func (releaseAsset GitLabReleaseAsset) GetTagName() string {

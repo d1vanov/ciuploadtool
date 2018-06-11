@@ -107,7 +107,10 @@ func uploadImpl(args *uploadArgs) (Client, error) {
 			return client, fmt.Errorf("Bad response on attempt to create the new release: %v", err)
 		}
 	} else {
-		existingReleaseAssets = release.GetAssets()
+		existingReleaseAssets, err = release.GetAssets()
+		if err != nil {
+			return client, err
+		}
 	}
 
 	if releaseExists {

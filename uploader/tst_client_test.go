@@ -159,7 +159,11 @@ func (client *TstClient) DeleteReleaseAsset(asset ReleaseAsset) (Response, error
 		return TstResponse{statusCode: 404, status: "Not found"}, errors.New("No releases within client")
 	}
 	for i := range client.releases {
-		for j, currentAsset := range client.releases[i].GetAssets() {
+		assets, err := client.releases[i].GetAssets()
+		if err != nil {
+			return TstResponse{statusCode: 500, status: "Internal error"}, err
+		}
+		for j, currentAsset := range assets {
 			if currentAsset.GetTagName() != asset.GetTagName() {
 				continue
 			}
@@ -181,7 +185,11 @@ func (client *TstClient) UploadReleaseAsset(release Release, assetName string, a
 	}
 	for i, currentRelease := range client.releases {
 		if currentRelease.GetTagName() == release.GetTagName() {
-			for _, asset := range currentRelease.GetAssets() {
+			assets, err := currentRelease.GetAssets()
+			if err != nil {
+				return TstReleaseAsset{}, TstResponse{statusCode: 500, status: "Internal error"}, err
+			}
+			for _, asset := range assets {
 				if asset.GetName() == assetName {
 					return TstReleaseAsset{}, TstResponse{statusCode: 400, status: "Release asset already exists"},
 						errors.New("Release asset with the given name already exists")
@@ -251,12 +259,12 @@ func (release *TstRelease) GetPrerelease() bool {
 	return release.isPrerelease
 }
 
-func (release *TstRelease) GetAssets() []ReleaseAsset {
+func (release *TstRelease) GetAssets() ([]ReleaseAsset, error) {
 	assets := make([]ReleaseAsset, 0, len(release.assets))
 	for _, asset := range release.assets {
 		assets = append(assets, asset)
 	}
-	return assets
+	return assets, nil
 }
 
 func (releaseAsset TstReleaseAsset) GetTagName() string {
