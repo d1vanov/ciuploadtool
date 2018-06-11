@@ -98,21 +98,16 @@ func uploadImpl(args *uploadArgs) (Client, error) {
 	if !releaseExists {
 		fmt.Println("Creating new release")
 		release, response, err = client.CreateRelease(args.releaseFactory(args.releaseBody, info))
-	} else {
-		existingReleaseAssets, response, err = client.ListReleaseAssets(info.tag)
-	}
-
-	response.CloseBody()
-	if err != nil {
-		return client, err
-	}
-
-	err = response.Check()
-	if err != nil {
-		if !releaseExists {
+		response.CloseBody()
+		if err != nil {
+			return client, err
+		}
+		err = response.Check()
+		if err != nil {
 			return client, fmt.Errorf("Bad response on attempt to create the new release: %v", err)
 		}
-		return client, fmt.Errorf("Bad response on attempt to list release assets: %v", err)
+	} else {
+		existingReleaseAssets = release.GetAssets()
 	}
 
 	if releaseExists {

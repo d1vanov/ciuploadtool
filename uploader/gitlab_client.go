@@ -140,33 +140,6 @@ func (client GitLabClient) DeleteTag(tagName string) (Response, error) {
 	return GitLabResponse{response: deleteTagResponse}, err
 }
 
-func (client GitLabClient) ListReleaseAssets(tagName string) ([]ReleaseAsset, Response, error) {
-	if client.client == nil {
-		return nil, GitLabResponse{}, errors.New("GitLab client is nil")
-	}
-	if client.client.Tags == nil {
-		return nil, GitLabResponse{}, errors.New("GitLab client.Tags is nil")
-	}
-	pid := client.owner + "%2F" + client.repo
-	gitLabTag, gitLabResponse, err := client.client.Tags.GetTag(pid, tagName)
-	if err != nil {
-		return nil, GitLabResponse{}, err
-	}
-	err = GitLabResponse{response: gitLabResponse}.Check()
-	if err != nil {
-		return nil, GitLabResponse{response: gitLabResponse}, nil
-	}
-	if gitLabTag.Release == nil {
-		return nil, GitLabResponse{}, errors.New("Found not release for the given tag")
-	}
-	var commit string
-	if gitLabTag.Commit != nil {
-		commit = gitLabTag.Commit.ID
-	}
-	release := GitLabRelease{release: gitLabTag.Release, commit: commit}
-	return release.GetAssets(), GitLabResponse{response: gitLabResponse}, nil
-}
-
 func (client GitLabClient) DeleteReleaseAsset(asset ReleaseAsset) (Response, error) {
 	// TODO: implement
 	return GitLabResponse{}, nil

@@ -15,7 +15,6 @@ type Client interface {
 	UpdateRelease(release Release) (Release, Response, error)
 	DeleteRelease(release Release) (Response, error)
 	DeleteTag(tagName string) (Response, error)
-	ListReleaseAssets(tagName string) ([]ReleaseAsset, Response, error)
 	DeleteReleaseAsset(asset ReleaseAsset) (Response, error)
 	UploadReleaseAsset(release Release, assetName string, assetFile *os.File) (ReleaseAsset, Response, error)
 }
