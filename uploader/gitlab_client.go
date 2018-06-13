@@ -160,7 +160,7 @@ func (client GitLabClient) DeleteReleaseAsset(asset ReleaseAsset) (Response, err
 	if response.Check() != nil {
 		return response, nil
 	}
-	assets, body, err := release.(GitLabRelease).parseBodyToDescriptionAndAssets()
+	assets, description, err := release.(GitLabRelease).parseBodyToDescriptionAndAssets()
 	if err != nil {
 		return GitLabResponse{}, err
 	}
@@ -170,17 +170,7 @@ func (client GitLabClient) DeleteReleaseAsset(asset ReleaseAsset) (Response, err
 			break
 		}
 	}
-	var buffer bytes.Buffer
-	buffer.WriteString(strings.TrimRight(body, "\n"))
-	buffer.WriteString("\nDownloads:\n")
-	for _, currentAsset := range assets {
-		buffer.WriteString(" * [")
-		buffer.WriteString(currentAsset.GetName())
-		buffer.WriteString("](")
-		buffer.WriteString(currentAsset.(GitLabReleaseAsset).uri)
-		buffer.WriteString(")\n")
-	}
-	release.SetBody(buffer.String())
+	writeReleaseBody(&release, description, assets)
 	_, response, err = client.UpdateRelease(release)
 	if err != nil {
 		response.CloseBody()
@@ -190,8 +180,52 @@ func (client GitLabClient) DeleteReleaseAsset(asset ReleaseAsset) (Response, err
 }
 
 func (client GitLabClient) UploadReleaseAsset(release Release, assetName string, assetFile *os.File) (ReleaseAsset, Response, error) {
-	// TODO: implement
-	return GitLabReleaseAsset{}, GitLabResponse{}, nil
+	if client.client == nil {
+		return GitLabReleaseAsset{}, GitLabResponse{}, errors.New("GitLab client is nil")
+	}
+	if client.client.Projects == nil {
+		return GitLabReleaseAsset{}, GitLabResponse{}, errors.New("GitLab client.Projects is nil")
+	}
+	if assetFile == nil {
+		return GitLabReleaseAsset{}, GitLabResponse{}, errors.New("The file to upload is nil")
+	}
+	assets, description, err := release.(GitLabRelease).parseBodyToDescriptionAndAssets()
+	if err != nil {
+		return GitLabReleaseAsset{}, GitLabResponse{}, err
+	}
+	assetIndex := -1
+	for i, currentAsset := range assets {
+		if currentAsset.GetName() == assetName {
+			assetIndex = i
+			break
+		}
+	}
+	pid := client.owner + "%2F" + client.repo
+	projectFile, gitLabResponse, err := client.client.Projects.UploadFile(pid, assetFile.Name())
+	gitLabResponse.Body.Close()
+	if err != nil {
+		return GitLabReleaseAsset{}, GitLabResponse{}, err
+	}
+	err = GitLabResponse{response: gitLabResponse}.Check()
+	if err != nil {
+		return GitLabReleaseAsset{}, GitLabResponse{response: gitLabResponse}, nil
+	}
+	if projectFile == nil {
+		return GitLabReleaseAsset{}, GitLabResponse{}, errors.New("Uploaded project file is nil")
+	}
+	asset := GitLabReleaseAsset{tagName: release.GetTagName(), uri: projectFile.URL, name: projectFile.Alt}
+	if assetIndex >= 0 {
+		assets[assetIndex] = asset
+	} else {
+		assets = append(assets, asset)
+	}
+	writeReleaseBody(&release, description, assets)
+	_, response, err := client.UpdateRelease(release)
+	if err != nil {
+		response.CloseBody()
+		return GitLabReleaseAsset{}, GitLabResponse{}, nil
+	}
+	return asset, response, err
 }
 
 func (response GitLabResponse) Check() error {
@@ -322,4 +356,18 @@ func (releaseAsset GitLabReleaseAsset) GetTagName() string {
 
 func (releaseAsset GitLabReleaseAsset) GetName() string {
 	return releaseAsset.name
+}
+
+func writeReleaseBody(release *Release, description string, assets []ReleaseAsset) {
+	var buffer bytes.Buffer
+	buffer.WriteString(strings.TrimRight(description, "\n"))
+	buffer.WriteString("\nDownloads:\n")
+	for _, currentAsset := range assets {
+		buffer.WriteString(" * [")
+		buffer.WriteString(currentAsset.GetName())
+		buffer.WriteString("](")
+		buffer.WriteString(currentAsset.(GitLabReleaseAsset).uri)
+		buffer.WriteString(")\n")
+	}
+	(*release).SetBody(buffer.String())
 }
