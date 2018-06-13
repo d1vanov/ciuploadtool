@@ -1,6 +1,7 @@
 package uploader
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -145,8 +146,47 @@ func (client GitLabClient) DeleteTag(tagName string) (Response, error) {
 }
 
 func (client GitLabClient) DeleteReleaseAsset(asset ReleaseAsset) (Response, error) {
-	// TODO: implement
-	return GitLabResponse{}, nil
+	if client.client == nil {
+		return GitLabResponse{}, errors.New("GitLab client is nil")
+	}
+	if client.client.Tags == nil {
+		return GitLabResponse{}, errors.New("GitLab client.Tags is nil")
+	}
+	release, response, err := client.GetReleaseByTag(asset.GetTagName())
+	if err != nil {
+		response.CloseBody()
+		return GitLabResponse{}, err
+	}
+	if response.Check() != nil {
+		return response, nil
+	}
+	assets, body, err := release.(GitLabRelease).parseBodyToDescriptionAndAssets()
+	if err != nil {
+		return GitLabResponse{}, err
+	}
+	for i, currentAsset := range assets {
+		if currentAsset.GetName() == asset.GetName() {
+			assets = append(assets[:i], assets[i+1:]...)
+			break
+		}
+	}
+	var buffer bytes.Buffer
+	buffer.WriteString(strings.TrimRight(body, "\n"))
+	buffer.WriteString("\nDownloads:\n")
+	for _, currentAsset := range assets {
+		buffer.WriteString(" * [")
+		buffer.WriteString(currentAsset.GetName())
+		buffer.WriteString("](")
+		buffer.WriteString(currentAsset.(GitLabReleaseAsset).uri)
+		buffer.WriteString(")\n")
+	}
+	release.SetBody(buffer.String())
+	_, response, err = client.UpdateRelease(release)
+	if err != nil {
+		response.CloseBody()
+		return GitLabResponse{}, nil
+	}
+	return response, err
 }
 
 func (client GitLabClient) UploadReleaseAsset(release Release, assetName string, assetFile *os.File) (ReleaseAsset, Response, error) {
@@ -240,8 +280,11 @@ func (release GitLabRelease) GetAssets() ([]ReleaseAsset, error) {
 	if release.release == nil {
 		return nil, errors.New("GitLab client is nil")
 	}
-	// TODO: parse the release's description and extract URLs of release assets from it
-	return nil, nil
+	releaseAssets, _, err := release.parseBodyToDescriptionAndAssets()
+	if err != nil {
+		return nil, err
+	}
+	return releaseAssets, nil
 }
 
 func (release GitLabRelease) parseBodyToDescriptionAndAssets() ([]ReleaseAsset, string, error) {
@@ -255,7 +298,7 @@ func (release GitLabRelease) parseBodyToDescriptionAndAssets() ([]ReleaseAsset, 
 		return nil, body, nil
 	}
 	searchStartIndex := downloadsIndex + len(downloadsString)
-	searchRegexp := regexp.MustCompile("\\[(\\w+)\\]\\((w+)\\)")
+	searchRegexp := regexp.MustCompile(`[(\w+)]\((\w+)\)`)
 	submatches := searchRegexp.FindAllStringSubmatch(body[searchStartIndex:len(body)], -1)
 	if submatches == nil {
 		return nil, body[:downloadsIndex], nil
@@ -263,11 +306,11 @@ func (release GitLabRelease) parseBodyToDescriptionAndAssets() ([]ReleaseAsset, 
 
 	var assets []ReleaseAsset
 	for _, match := range submatches {
-		if len(match) != 2 {
-			err := fmt.Errorf("Can't parse downloads from release description: unexpected number of matches inside a submatch: %d", len(match))
+		if len(match) != 3 {
+			err := fmt.Errorf("Can't parse downloads from release description: unexpected number of matches inside a submatch: %d", len(match)-1)
 			return nil, "", err
 		}
-		assets = append(assets, GitLabReleaseAsset{tagName: release.GetTagName(), uri: match[1], name: match[0]})
+		assets = append(assets, GitLabReleaseAsset{tagName: release.GetTagName(), uri: match[2], name: match[1]})
 	}
 
 	return assets, body[:downloadsIndex], nil
@@ -278,6 +321,5 @@ func (releaseAsset GitLabReleaseAsset) GetTagName() string {
 }
 
 func (releaseAsset GitLabReleaseAsset) GetName() string {
-	// TODO: implement somehow
-	return ""
+	return releaseAsset.name
 }
