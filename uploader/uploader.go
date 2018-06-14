@@ -8,27 +8,35 @@ import (
 	"strings"
 )
 
-type clientFactoryFunc func(gitHubToken string, owner string, repo string) Client
+type clientFactoryFunc func(authToken string, owner string, repo string) Client
 
 type releaseFactoryFunc func(releaseBody string, info *buildEventInfo) Release
 
-type uploadArgs struct {
-	clientFactory  clientFactoryFunc
-	releaseFactory releaseFactoryFunc
-	filenames      []string
-	releaseSuffix  string
-	releaseBody    string
-	useGitLab      bool
-	repoSlug       string
+type overrideUploadOptions struct {
+	service string
+	repo    string
+	owner   string
+	token   string
 }
 
-func Upload(filenames []string, useGitLab bool, repoSlug string, releaseSuffix string, releaseBody string) error {
+type uploadArgs struct {
+	clientFactory   clientFactoryFunc
+	releaseFactory  releaseFactoryFunc
+	filenames       []string
+	releaseSuffix   string
+	releaseBody     string
+	overrideOptions overrideUploadOptions
+}
+
+func Upload(filenames []string, uploadToService, uploadToRepo, uploadToRepoOwner, uploadAuthToken, releaseSuffix, releaseBody string) error {
 	var args uploadArgs
-	args.clientFactory = clientFactoryFunc(newGitHubClient)
-	args.releaseFactory = newGitHubRelease
 	args.filenames = filenames
 	args.releaseSuffix = releaseSuffix
 	args.releaseBody = releaseBody
+	args.overrideOptions.service = uploadToService
+	args.overrideOptions.repo = uploadToRepo
+	args.overrideOptions.owner = uploadToRepoOwner
+	args.overrideOptions.token = uploadAuthToken
 	_, err := uploadImpl(&args)
 	return err
 }
@@ -45,7 +53,38 @@ func uploadImpl(args *uploadArgs) (Client, error) {
 		return nil, nil
 	}
 
-	client := args.clientFactory(info.token, info.owner, info.repo)
+	var token string
+	if len(args.overrideOptions.token) != 0 {
+		token = args.overrideOptions.token
+	} else {
+		token = info.token
+	}
+
+	var owner string
+	if len(args.overrideOptions.owner) != 0 {
+		owner = args.overrideOptions.owner
+	} else {
+		owner = info.owner
+	}
+
+	var repo string
+	if len(args.overrideOptions.repo) != 0 {
+		repo = args.overrideOptions.repo
+	} else {
+		repo = info.repo
+	}
+
+	if args.clientFactory == nil && args.releaseFactory == nil {
+		if args.overrideOptions.service == "gitlab" || info.whichCi == gitlabCi {
+			args.clientFactory = clientFactoryFunc(newGitLabClient)
+			args.releaseFactory = releaseFactoryFunc(newGitLabRelease)
+		} else {
+			args.clientFactory = clientFactoryFunc(newGitHubClient)
+			args.releaseFactory = releaseFactoryFunc(newGitHubRelease)
+		}
+	}
+
+	client := args.clientFactory(token, owner, repo)
 
 	// Check whether the release corresponding to the tag already exists
 	releaseExists := false
@@ -191,10 +230,13 @@ func updateBuildLogWithinReleaseBody(release Release, info *buildEventInfo) Rele
 	foundCiLine := false
 	for scanner.Scan() {
 		line := scanner.Text()
-		if info.isTravisCi && strings.HasPrefix(line, "Travis CI build log: https://travis-ci.org/"+info.owner+"/"+info.repo+"/builds/") {
+		if (info.whichCi == travisCi) && strings.HasPrefix(line, "Travis CI build log: https://travis-ci.org/"+info.owner+"/"+info.repo+"/builds/") {
 			foundCiLine = true
 			line = ciBuildLogString(info)
-		} else if !info.isTravisCi && strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/project/"+info.owner+"/"+info.repo+"/build") {
+		} else if (info.whichCi == appveyorCi) && strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/project/"+info.owner+"/"+info.repo+"/build") {
+			foundCiLine = true
+			line = ciBuildLogString(info)
+		} else if (info.whichCi == gitlabCi) && strings.HasPrefix(line, "GitLab CI build log: https://gitlab.com/"+info.owner+"/"+info.repo+"/builds/") {
 			foundCiLine = true
 			line = ciBuildLogString(info)
 		}
@@ -213,8 +255,11 @@ func ciBuildLogString(info *buildEventInfo) string {
 	if len(info.buildId) == 0 {
 		return ""
 	}
-	if info.isTravisCi {
+	if info.whichCi == travisCi {
 		return "Travis CI build log: https://travis-ci.org/" + info.owner + "/" + info.repo + "/builds/" + info.buildId + "/"
+	} else if info.whichCi == appveyorCi {
+		return "AppVeyor CI build log: https://ci.appveyor.com/project/" + info.owner + "/" + info.repo + "/build/" + info.buildId
+	} else {
+		return "GitLab CI build log: https://gitlab.com/" + info.owner + "/" + info.repo + "/builds/" + info.buildId
 	}
-	return "AppVeyor CI build log: https://ci.appveyor.com/project/" + info.owner + "/" + info.repo + "/build/" + info.buildId
 }

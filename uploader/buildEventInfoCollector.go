@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+const (
+	gitlabCi   = iota
+	travisCi   = iota
+	appveyorCi = iota
+)
+
 type buildEventInfo struct {
 	token         string
 	tag           string
@@ -17,28 +23,32 @@ type buildEventInfo struct {
 	isPullRequest bool
 	releaseTitle  string
 	isPrerelease  bool
-	isTravisCi    bool
+	whichCi       int
 	buildId       string
 }
 
 func collectBuildEventInfo(args *uploadArgs) (*buildEventInfo, error) {
-	// Check whether the app is run during Travis CI or AppVeyor CI build
+	// Check whether the app is run during Travis CI or AppVeyor CI or GitLab CI build
 	appVeyorEnvVar := os.Getenv("APPVEYOR")
 	travisCiEnvVar := os.Getenv("TRAVIS")
+	gitLabCiEnvVar := os.Getenv("GITLAB_CI")
 	isTravisCi := travisCiEnvVar == "true"
 	isAppVeyor := appVeyorEnvVar == "True"
-	if !isTravisCi && !isAppVeyor {
-		fmt.Println("Neither Travis CI build nor AppVeyor build. Not doing anything")
+	isGitLabCi := gitLabCiEnvVar == "true"
+	if !isTravisCi && !isAppVeyor && !isGitLabCi {
+		fmt.Println("Neither Travis CI build nor AppVeyor build nor GitLab CI build. Not doing anything")
 		return nil, nil
 	}
 
 	var info buildEventInfo
 
-	// Get GitHub API token from the environment variable
+	// Get GitHub/GitLab API token from the environment variable
 	if isAppVeyor {
 		info.token = os.Getenv("auth_token")
-	} else {
+	} else if isTravisCi {
 		info.token = os.Getenv("GITHUB_TOKEN")
+	} else {
+		info.token = os.Getenv("GITLAB_TOKEN")
 	}
 
 	if info.token == "" {
@@ -49,12 +59,18 @@ func collectBuildEventInfo(args *uploadArgs) (*buildEventInfo, error) {
 			return nil, nil
 		}
 
-		return nil, errors.New("No GitHub access token, can't proceed")
+		return nil, errors.New("No GitHub/GitLab access token, can't proceed")
 	}
 
 	// Get various build information from environment variables
-	// specific to Travis CI and AppVeyor CI
-	info.isTravisCi = isTravisCi
+	// specific to Travis CI and AppVeyor CI and GitLab CI
+	if isAppVeyor {
+		info.whichCi = appveyorCi
+	} else if isTravisCi {
+		info.whichCi = travisCi
+	} else {
+		info.whichCi = gitlabCi
+	}
 
 	repoSlug := ""
 
@@ -66,7 +82,7 @@ func collectBuildEventInfo(args *uploadArgs) (*buildEventInfo, error) {
 		repoSlug = os.Getenv("APPVEYOR_REPO_NAME")
 		info.buildId = os.Getenv("APPVEYOR_BUILD_VERSION")
 		info.isPullRequest = os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER") != ""
-	} else {
+	} else if isTravisCi {
 		fmt.Println("Running on Travis CI")
 		info.branch = os.Getenv("TRAVIS_BRANCH")
 		info.tag = os.Getenv("TRAVIS_TAG")
@@ -74,6 +90,14 @@ func collectBuildEventInfo(args *uploadArgs) (*buildEventInfo, error) {
 		repoSlug = os.Getenv("TRAVIS_REPO_SLUG")
 		info.buildId = os.Getenv("TRAVIS_BUILD_ID")
 		info.isPullRequest = os.Getenv("TRAVIS_EVENT_TYPE") == "pull_request"
+	} else {
+		fmt.Println("Running on GitLab CI")
+		info.branch = os.Getenv("CI_COMMIT_REF_NAME")
+		info.tag = os.Getenv("CI_COMMIT_TAG")
+		info.commit = os.Getenv("CI_COMMIT_SHA")
+		repoSlug = os.Getenv("CI_PROJECT_NAMESPACE") + "/" + os.Getenv("CI_PROJECT_NAME")
+		info.buildId = os.Getenv("CI_JOB_ID")
+		info.isPullRequest = false
 	}
 
 	if info.isPullRequest {
