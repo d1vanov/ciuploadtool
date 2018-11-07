@@ -120,7 +120,7 @@ func (client GitHubClient) UpdateRelease(release Release) (Release, Response, er
 	return GitHubRelease{release: gitHubRelease}, GitHubResponse{response: gitHubResponse}, err
 }
 
-func (client GitHubClient) DeleteRelease(releaseId int) (Response, error) {
+func (client GitHubClient) DeleteRelease(releaseId int64) (Response, error) {
 	if client.client == nil {
 		return GitHubResponse{}, errors.New("GitHub client is nil")
 	}
@@ -146,7 +146,7 @@ func (client GitHubClient) DeleteTag(tagName string) (Response, error) {
 	return GitHubResponse{response: &github.Response{gitHubResponse, 0, 0, 0, 0, github.Rate{}}}, err
 }
 
-func (client GitHubClient) ListReleaseAssets(releaseId int) ([]ReleaseAsset, Response, error) {
+func (client GitHubClient) ListReleaseAssets(releaseId int64) ([]ReleaseAsset, Response, error) {
 	if client.client == nil {
 		return nil, GitHubResponse{}, errors.New("GitHub client is nil")
 	}
@@ -159,7 +159,7 @@ func (client GitHubClient) ListReleaseAssets(releaseId int) ([]ReleaseAsset, Res
 	return releaseAssets, GitHubResponse{response: gitHubResponse}, err
 }
 
-func (client GitHubClient) DeleteReleaseAsset(assetId int) (Response, error) {
+func (client GitHubClient) DeleteReleaseAsset(assetId int64) (Response, error) {
 	if client.client == nil {
 		return GitHubResponse{}, errors.New("GitHub client is nil")
 	}
@@ -167,7 +167,7 @@ func (client GitHubClient) DeleteReleaseAsset(assetId int) (Response, error) {
 	return GitHubResponse{response: gitHubResponse}, err
 }
 
-func (client GitHubClient) UploadReleaseAsset(releaseId int, assetName string,
+func (client GitHubClient) UploadReleaseAsset(releaseId int64, assetName string,
 	assetFile *os.File) (ReleaseAsset, Response, error) {
 	if client.client == nil {
 		return GitHubReleaseAsset{}, GitHubResponse{}, errors.New("GitHub client is nil")
@@ -223,7 +223,7 @@ func (response GitHubResponse) CloseBody() {
 	response.response.Body.Close()
 }
 
-func (release GitHubRelease) GetID() int {
+func (release GitHubRelease) GetID() int64 {
 	if release.release == nil {
 		return 0
 	}
@@ -299,7 +299,7 @@ func (release GitHubRelease) GetAssets() []ReleaseAsset {
 	return assets
 }
 
-func (releaseAsset GitHubReleaseAsset) GetID() int {
+func (releaseAsset GitHubReleaseAsset) GetID() int64 {
 	if releaseAsset.asset == nil {
 		return 0
 	}

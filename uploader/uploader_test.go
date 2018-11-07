@@ -763,7 +763,7 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 	defer file.Close()
 
 	oldCommit := generateRandomString(16)
-	oldId := 0
+	oldId := int64(0)
 	commit := generateRandomString(16)
 	branch := "master"
 	tag := "continuous-master"
