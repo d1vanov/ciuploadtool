@@ -25,6 +25,7 @@ type GitHubResponse struct {
 
 type GitHubRelease struct {
 	release *github.RepositoryRelease
+	repoTag *github.RepositoryTag
 }
 
 type GitHubReleaseAsset struct {
@@ -40,7 +41,7 @@ func newGitHubClient(gitHubToken string, owner string, repo string) Client {
 }
 
 func newGitHubRelease(releaseBody string, info *buildEventInfo) Release {
-	release := GitHubRelease{release: new(github.RepositoryRelease)}
+	release := GitHubRelease{release: new(github.RepositoryRelease), repoTag: new(github.RepositoryTag)}
 	release.release.TagName = new(string)
 	*release.release.TagName = info.tag
 	release.release.TargetCommitish = new(string)
@@ -71,7 +72,35 @@ func (client GitHubClient) GetReleaseByTag(tagName string) (Release, Response, e
 		return GitHubRelease{}, GitHubResponse{}, errors.New("GitHub client is nil")
 	}
 	gitHubRelease, gitHubResponse, err := client.client.Repositories.GetReleaseByTag(client.ctx, client.owner, client.repo, tagName)
-	return GitHubRelease{release: gitHubRelease}, GitHubResponse{response: gitHubResponse}, err
+	if err != nil {
+		return GitHubRelease{}, GitHubResponse{}, err
+	}
+
+	tagList, gitHubTagListResponse, err := client.client.Repositories.ListTags(client.ctx, client.owner, client.repo, nil)
+	if err != nil {
+		return GitHubRelease{}, GitHubResponse{}, err
+	}
+
+	tagResp := GitHubResponse{response: gitHubTagListResponse}
+	err = tagResp.Check()
+	if err != nil {
+		return GitHubRelease{}, tagResp, err
+	}
+
+	release := GitHubRelease{release: gitHubRelease}
+
+	for _, tag := range tagList {
+		if tag == nil {
+			continue
+		}
+		if tag.GetName() != tagName {
+			continue
+		}
+		release.repoTag = tag
+		return release, GitHubResponse{response: gitHubResponse}, nil
+	}
+
+	return GitHubRelease{}, GitHubResponse{}, errors.New("Failed to create GitHub release: failed to locate tag")
 }
 
 func (client GitHubClient) CreateRelease(release Release) (Release, Response, error) {
@@ -232,10 +261,14 @@ func (release GitHubRelease) GetTagName() string {
 }
 
 func (release GitHubRelease) GetTargetCommitish() string {
-	if release.release == nil {
+	if release.repoTag == nil {
 		return ""
 	}
-	return release.release.GetTargetCommitish()
+	commit := release.repoTag.GetCommit()
+	if commit == nil {
+		return ""
+	}
+	return commit.GetSHA()
 }
 
 func (release GitHubRelease) GetDraft() bool {
