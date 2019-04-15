@@ -36,15 +36,7 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 
 	release, response, err := client.GetReleaseByTag(info.tag)
 	response.CloseBody()
-	if err != nil {
-		if response != nil && response.GetStatusCode() == 404 {
-			err = nil
-		}
-		if err != nil {
-			err = fmt.Errorf("Failed to fetch release information: %v", err)
-			return client, err
-		}
-	} else {
+	if err == nil {
 		err = response.Check()
 		if err != nil {
 			return client, err
