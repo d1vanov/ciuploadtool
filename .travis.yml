@@ -22,6 +22,7 @@ install:
     if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
       sudo apt-get install p7zip-full
     else
+      brew update-reset
       brew install p7zip
     fi
   - go get golang.org/x/oauth2
