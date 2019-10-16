@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 )
 
 var lastFreeReleaseAssetId int64
@@ -53,7 +54,7 @@ func newTstClient(gitHubToken string, owner string, repo string) Client {
 	return &TstClient{token: gitHubToken, owner: owner, repo: repo}
 }
 
-func newTstRelease(releaseBody string, info *buildEventInfo) Release {
+func newTstRelease(releaseBody string, info *buildEventInfo, verbose bool) Release {
 	release := TstRelease{
 		id:              lastFreeReleaseId,
 		name:            info.releaseTitle,
@@ -64,7 +65,7 @@ func newTstRelease(releaseBody string, info *buildEventInfo) Release {
 		isPrerelease:    info.isPrerelease,
 	}
 	lastFreeReleaseId++
-	return updateBuildLogWithinReleaseBody(&release, info)
+	return updateBuildLogWithinReleaseBody(&release, info, verbose)
 }
 
 func (client TstClient) GetContext() context.Context {
@@ -299,4 +300,9 @@ func (releaseAsset TstReleaseAsset) GetName() string {
 
 func (releaseAsset TstReleaseAsset) GetContent() string {
 	return releaseAsset.content
+}
+
+func (releaseAsset TstReleaseAsset) GetDescription() string {
+	return "name = " + releaseAsset.name + ", id = " +
+		strconv.FormatInt(releaseAsset.id, 10)
 }
