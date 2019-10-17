@@ -22,7 +22,8 @@ func TestNewReleaseWithSingleUploadedBinary(t *testing.T) {
 	binaryContent := "Binary content"
 	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the single "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(file.Name())
@@ -42,15 +43,23 @@ func TestNewReleaseWithSingleUploadedBinary(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(newTstClient),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload the single binary: %v", err)
 		}
@@ -61,51 +70,65 @@ func TestNewReleaseWithSingleUploadedBinary(t *testing.T) {
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Uploading single binary to new release failed: no releases within the returned client")
+			t.Fatalf("Uploading single binary to new release failed: no releases " +
+				"within the returned client")
 		}
 
 		release := tstClient.releases[0]
 		assets := release.GetAssets()
 		if len(assets) != 1 {
-			t.Fatalf("Uploading single binary to new release failed: no assets within the release")
+			t.Fatalf("Uploading single binary to new release failed: no assets " +
+				"within the release")
 		}
 
 		asset := assets[0]
 		tstAsset, ok := asset.(TstReleaseAsset)
 		if !ok {
-			t.Fatalf("Failed to cast the release asset to TstReleaseAsset: %v", err)
+			t.Fatalf(
+				"Failed to cast the release asset to TstReleaseAsset: %v",
+				err)
 		}
 
 		tstAssetContent := tstAsset.GetContent()
 		if tstAssetContent != binaryContent {
-			t.Fatalf("The contents of uploaded release asset don't match the original resource file's contents")
+			t.Fatalf("The contents of uploaded release asset don't match " +
+				"the original resource file's contents")
 		}
 	}
 }
 
 func TestNewReleaseWithSeveralUploadedBinaries(t *testing.T) {
 	firstFileContent := "First file content"
-	firstFile, err := setupSampleAssetFile("firstUploadedBinary.txt", firstFileContent)
+	firstFile, err := setupSampleAssetFile(
+		"firstUploadedBinary.txt",
+		firstFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the first uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the first "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(firstFile.Name())
 	defer firstFile.Close()
 
 	secondFileContent := "Second file content"
-	secondFile, err := setupSampleAssetFile("secondUploadedBinary.txt", secondFileContent)
+	secondFile, err := setupSampleAssetFile(
+		"secondUploadedBinary.txt",
+		secondFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the second uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the second "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(secondFile.Name())
 	defer secondFile.Close()
 
 	thirdFileContent := "Third file content"
-	thirdFile, err := setupSampleAssetFile("thirdUploadedBinary.txt", thirdFileContent)
+	thirdFile, err := setupSampleAssetFile(
+		"thirdUploadedBinary.txt",
+		thirdFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the third uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the third "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(thirdFile.Name())
@@ -130,15 +153,23 @@ func TestNewReleaseWithSeveralUploadedBinaries(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), filenames,
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(newTstClient),
+			releaseFactoryFunc(newTstRelease),
+			filenames,
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload one of binaries: %v", err)
 		}
@@ -149,34 +180,41 @@ func TestNewReleaseWithSeveralUploadedBinaries(t *testing.T) {
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Uploading one of binaries to new release failed: no releases within the returned client")
+			t.Fatalf("Uploading one of binaries to new release failed: no " +
+				"releases within the returned client")
 		}
 
 		release := tstClient.releases[0]
 		assets := release.GetAssets()
 		if len(assets) != 3 {
-			t.Fatalf("Uploading one of binaries to new release failed: wrong number of assets within the release")
+			t.Fatalf("Uploading one of binaries to new release failed: wrong " +
+				"number of assets within the release")
 		}
 
 		for _, asset := range assets {
 			tstAsset, ok := asset.(TstReleaseAsset)
 			if !ok {
-				t.Fatalf("Failed to cast the release asset to TstReleaseAsset: %v", err)
+				t.Fatalf(
+					"Failed to cast the release asset to TstReleaseAsset: %v",
+					err)
 			}
 
 			tstAssetContent := tstAsset.GetContent()
 
 			if tstAsset.GetName() == filepath.Base(firstFile.Name()) {
 				if tstAssetContent != firstFileContent {
-					t.Fatalf("The contents of the first uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the first uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == filepath.Base(secondFile.Name()) {
 				if tstAssetContent != secondFileContent {
-					t.Fatalf("The contents of the second uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the second uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == filepath.Base(thirdFile.Name()) {
 				if tstAssetContent != thirdFileContent {
-					t.Fatalf("The contents of the third uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the third uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else {
 				t.Fatalf("Found unidentified release asset: %+v", tstAsset)
@@ -189,7 +227,8 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	binaryContent := "Binary content"
 	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the single "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(file.Name())
@@ -209,26 +248,38 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+		clientFactory := func(
+			gitHubToken string,
+			owner string,
+			repo string) Client {
+
+			info, err := collectBuildEventInfo(releaseSuffix, false)
 			if err != nil {
 				panic(err)
 			}
-			tstRelease := newTstRelease(releaseBody, info).(*TstRelease)
+			tstRelease := newTstRelease(releaseBody, info, false).(*TstRelease)
 			tstClient := newTstClient(gitHubToken, owner, repo).(*TstClient)
 			tstClient.releases = append(tstClient.releases, *tstRelease)
 			return tstClient
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(clientFactory), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(clientFactory),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload one of binaries: %v", err)
 		}
@@ -239,51 +290,65 @@ func TestInitiallyEmptyExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Uploading one of binaries to existing release failed: no releases within the returned client")
+			t.Fatalf("Uploading one of binaries to existing release failed: no " +
+				"releases within the returned client")
 		}
 
 		release := tstClient.releases[0]
 		assets := release.GetAssets()
 		if len(assets) != 1 {
-			t.Fatalf("Uploading one of binaries to existing release failed: no assets within the release")
+			t.Fatalf("Uploading one of binaries to existing release failed: " +
+				"no assets within the release")
 		}
 
 		asset := assets[0]
 		tstAsset, ok := asset.(TstReleaseAsset)
 		if !ok {
-			t.Fatalf("Failed to cast the release asset to TstReleaseAsset: %v", err)
+			t.Fatalf(
+				"Failed to cast the release asset to TstReleaseAsset: %v",
+				err)
 		}
 
 		tstAssetContent := tstAsset.GetContent()
 		if tstAssetContent != binaryContent {
-			t.Fatalf("The contents of uploaded release asset don't match the original resource file's contents")
+			t.Fatalf("The contents of uploaded release asset don't match " +
+				"the original resource file's contents")
 		}
 	}
 }
 
 func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) {
 	firstFileContent := "First file content"
-	firstFile, err := setupSampleAssetFile("firstUploadedBinary.txt", firstFileContent)
+	firstFile, err := setupSampleAssetFile(
+		"firstUploadedBinary.txt",
+		firstFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the first uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the first "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(firstFile.Name())
 	defer firstFile.Close()
 
 	secondFileContent := "Second file content"
-	secondFile, err := setupSampleAssetFile("secondUploadedBinary.txt", secondFileContent)
+	secondFile, err := setupSampleAssetFile(
+		"secondUploadedBinary.txt",
+		secondFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the second uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the second "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(secondFile.Name())
 	defer secondFile.Close()
 
 	thirdFileContent := "Third file content"
-	thirdFile, err := setupSampleAssetFile("thirdUploadedBinary.txt", thirdFileContent)
+	thirdFile, err := setupSampleAssetFile(
+		"thirdUploadedBinary.txt",
+		thirdFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the third uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the third "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(thirdFile.Name())
@@ -308,26 +373,38 @@ func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) 
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+		clientFactory := func(
+			gitHubToken string,
+			owner string,
+			repo string) Client {
+
+			info, err := collectBuildEventInfo(releaseSuffix, false)
 			if err != nil {
 				panic(err)
 			}
-			tstRelease := newTstRelease(releaseBody, info).(*TstRelease)
+			tstRelease := newTstRelease(releaseBody, info, false).(*TstRelease)
 			tstClient := newTstClient(gitHubToken, owner, repo).(*TstClient)
 			tstClient.releases = append(tstClient.releases, *tstRelease)
 			return tstClient
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(clientFactory), releaseFactoryFunc(newTstRelease), filenames,
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(clientFactory),
+			releaseFactoryFunc(newTstRelease),
+			filenames,
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload one of binaries: %v", err)
 		}
@@ -338,34 +415,41 @@ func TestInitiallyEmptyExistingReleaseWithSeveralUploadedBinaries(t *testing.T) 
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Uploading one of binaries to existing release failed: no releases within the returned client")
+			t.Fatalf("Uploading one of binaries to existing release failed: " +
+				"no releases within the returned client")
 		}
 
 		release := tstClient.releases[0]
 		assets := release.GetAssets()
 		if len(assets) != 3 {
-			t.Fatalf("Uploading one of binaries to existing release failed: wrong number of assets within the release")
+			t.Fatalf("Uploading one of binaries to existing release failed: " +
+				"wrong number of assets within the release")
 		}
 
 		for _, asset := range assets {
 			tstAsset, ok := asset.(TstReleaseAsset)
 			if !ok {
-				t.Fatalf("Failed to cast the release asset to TstReleaseAsset: %v", err)
+				t.Fatalf(
+					"Failed to cast the release asset to TstReleaseAsset: %v",
+					err)
 			}
 
 			tstAssetContent := tstAsset.GetContent()
 
 			if tstAsset.GetName() == filepath.Base(firstFile.Name()) {
 				if tstAssetContent != firstFileContent {
-					t.Fatalf("The contents of the first uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the first uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == filepath.Base(secondFile.Name()) {
 				if tstAssetContent != secondFileContent {
-					t.Fatalf("The contents of the second uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the second uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == filepath.Base(thirdFile.Name()) {
 				if tstAssetContent != thirdFileContent {
-					t.Fatalf("The contents of the third uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the third uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else {
 				t.Fatalf("Found unidentified release asset: %+v", tstAsset)
@@ -378,7 +462,8 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	binaryContent := "Binary content"
 	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the single "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(file.Name())
@@ -398,19 +483,26 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+		clientFactory := func(
+			gitHubToken string,
+			owner string,
+			repo string) Client {
+
+			info, err := collectBuildEventInfo(releaseSuffix, false)
 			if err != nil {
 				panic(err)
 			}
-			tstRelease := newTstRelease(releaseBody, info).(*TstRelease)
+			tstRelease := newTstRelease(releaseBody, info, false).(*TstRelease)
 			tstAsset := TstReleaseAsset{
 				id:      lastFreeReleaseAssetId,
 				name:    filepath.Base(file.Name()),
@@ -422,8 +514,13 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 			return tstClient
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(clientFactory), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(clientFactory),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload the single binary: %v", err)
 		}
@@ -434,51 +531,67 @@ func TestExistingReleaseWithSingleUploadedBinary(t *testing.T) {
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Uploading single binary to existing release failed: no releases within the returned client")
+			t.Fatalf("Uploading single binary to existing release failed: " +
+				"no releases within the returned client")
 		}
 
 		release := tstClient.releases[0]
 		assets := release.GetAssets()
 		if len(assets) != 1 {
-			t.Fatalf("Uploading single binary to existing release failed: no assets within the release")
+			t.Fatalf("Uploading single binary to existing release failed: " +
+				"no assets within the release")
 		}
 
 		asset := assets[0]
 		tstAsset, ok := asset.(TstReleaseAsset)
 		if !ok {
-			t.Fatalf("Failed to cast the release asset to TstReleaseAsset: %v", err)
+			t.Fatalf(
+				"Failed to cast the release asset to TstReleaseAsset: %v",
+				err)
 		}
 
 		tstAssetContent := tstAsset.GetContent()
 		if tstAssetContent != binaryContent {
-			t.Fatalf("The contents of uploaded release asset don't match the original resource file's contents")
+			t.Fatalf("The contents of uploaded release asset don't match " +
+				"the original resource file's contents")
 		}
 	}
 }
 
-func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testing.T) {
+func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(
+	t *testing.T) {
+
 	firstFileContent := "First file content"
-	firstFile, err := setupSampleAssetFile("firstUploadedBinary.txt", firstFileContent)
+	firstFile, err := setupSampleAssetFile(
+		"firstUploadedBinary.txt",
+		firstFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the first uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the first "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(firstFile.Name())
 	defer firstFile.Close()
 
 	secondFileContent := "Second file content"
-	secondFile, err := setupSampleAssetFile("secondUploadedBinary.txt", secondFileContent)
+	secondFile, err := setupSampleAssetFile(
+		"secondUploadedBinary.txt",
+		secondFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the second uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the second "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(secondFile.Name())
 	defer secondFile.Close()
 
 	thirdFileContent := "Third file content"
-	thirdFile, err := setupSampleAssetFile("thirdUploadedBinary.txt", thirdFileContent)
+	thirdFile, err := setupSampleAssetFile(
+		"thirdUploadedBinary.txt",
+		thirdFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the third uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the third "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(thirdFile.Name())
@@ -503,19 +616,26 @@ func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testi
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+		clientFactory := func(
+			gitHubToken string,
+			owner string,
+			repo string) Client {
+
+			info, err := collectBuildEventInfo(releaseSuffix, false)
 			if err != nil {
 				panic(err)
 			}
-			tstRelease := newTstRelease(releaseBody, info).(*TstRelease)
+			tstRelease := newTstRelease(releaseBody, info, false).(*TstRelease)
 			firstAsset := TstReleaseAsset{
 				id:      lastFreeReleaseAssetId,
 				name:    filepath.Base(firstFile.Name()),
@@ -542,8 +662,13 @@ func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testi
 			return tstClient
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(clientFactory), releaseFactoryFunc(newTstRelease), filenames,
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(clientFactory),
+			releaseFactoryFunc(newTstRelease),
+			filenames,
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload one of binaries: %v", err)
 		}
@@ -554,34 +679,41 @@ func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testi
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Uploading one of binaries to existing release failed: no releases within the returned client")
+			t.Fatalf("Uploading one of binaries to existing release failed: " +
+				"no releases within the returned client")
 		}
 
 		release := tstClient.releases[0]
 		assets := release.GetAssets()
 		if len(assets) != 3 {
-			t.Fatalf("Uploading one of binaries to existing release failed: no assets within the release")
+			t.Fatalf("Uploading one of binaries to existing release failed: " +
+				"no assets within the release")
 		}
 
 		for _, asset := range assets {
 			tstAsset, ok := asset.(TstReleaseAsset)
 			if !ok {
-				t.Fatalf("Failed to cast the release asset to TstReleaseAsset: %v", err)
+				t.Fatalf(
+					"Failed to cast the release asset to TstReleaseAsset: %v",
+					err)
 			}
 
 			tstAssetContent := tstAsset.GetContent()
 
 			if tstAsset.GetName() == filepath.Base(firstFile.Name()) {
 				if tstAssetContent != firstFileContent {
-					t.Fatalf("The contents of the first uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the first uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == filepath.Base(secondFile.Name()) {
 				if tstAssetContent != secondFileContent {
-					t.Fatalf("The contents of the second uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the second uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == filepath.Base(thirdFile.Name()) {
 				if tstAssetContent != thirdFileContent {
-					t.Fatalf("The contents of the third uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the third uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else {
 				t.Fatalf("Found unidentified release asset: %+v", tstAsset)
@@ -590,29 +722,40 @@ func TestExistingReleaseWithSeveralUploadedBinariesAllBeingReplacements(t *testi
 	}
 }
 
-func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(t *testing.T) {
+func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(
+	t *testing.T) {
+
 	firstFileContent := "First file content"
-	firstFile, err := setupSampleAssetFile("firstUploadedBinary.txt", firstFileContent)
+	firstFile, err := setupSampleAssetFile(
+		"firstUploadedBinary.txt",
+		firstFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the first uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the first "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(firstFile.Name())
 	defer firstFile.Close()
 
 	secondFileContent := "Second file content"
-	secondFile, err := setupSampleAssetFile("secondUploadedBinary.txt", secondFileContent)
+	secondFile, err := setupSampleAssetFile(
+		"secondUploadedBinary.txt",
+		secondFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the second uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the second "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(secondFile.Name())
 	defer secondFile.Close()
 
 	thirdFileContent := "Third file content"
-	thirdFile, err := setupSampleAssetFile("thirdUploadedBinary.txt", thirdFileContent)
+	thirdFile, err := setupSampleAssetFile(
+		"thirdUploadedBinary.txt",
+		thirdFileContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the third uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the third "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(thirdFile.Name())
@@ -643,19 +786,26 @@ func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(t *te
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+		clientFactory := func(
+			gitHubToken string,
+			owner string,
+			repo string) Client {
+
+			info, err := collectBuildEventInfo(releaseSuffix, false)
 			if err != nil {
 				panic(err)
 			}
-			tstRelease := newTstRelease(releaseBody, info).(*TstRelease)
+			tstRelease := newTstRelease(releaseBody, info, false).(*TstRelease)
 			firstAsset := TstReleaseAsset{
 				id:      lastFreeReleaseAssetId,
 				name:    filepath.Base(firstFile.Name()),
@@ -696,8 +846,13 @@ func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(t *te
 			return tstClient
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(clientFactory), releaseFactoryFunc(newTstRelease), filenames,
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(clientFactory),
+			releaseFactoryFunc(newTstRelease),
+			filenames,
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload one of binaries: %v", err)
 		}
@@ -708,42 +863,51 @@ func TestExistingReleaseWithSeveralUploadedBinariesNotAllBeingReplacements(t *te
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Uploading one of binaries to existing release failed: no releases within the returned client")
+			t.Fatalf("Uploading one of binaries to existing release failed: " +
+				"no releases within the returned client")
 		}
 
 		release := tstClient.releases[0]
 		assets := release.GetAssets()
 		if len(assets) != 5 {
-			t.Fatalf("Uploading one of binaries to existing release failed: wrong number of assets within the release")
+			t.Fatalf("Uploading one of binaries to existing release failed: " +
+				"wrong number of assets within the release")
 		}
 
 		for _, asset := range assets {
 			tstAsset, ok := asset.(TstReleaseAsset)
 			if !ok {
-				t.Fatalf("Failed to cast the release asset to TstReleaseAsset: %v", err)
+				t.Fatalf(
+					"Failed to cast the release asset to TstReleaseAsset: %v",
+					err)
 			}
 
 			tstAssetContent := tstAsset.GetContent()
 
 			if tstAsset.GetName() == filepath.Base(firstFile.Name()) {
 				if tstAssetContent != firstFileContent {
-					t.Fatalf("The contents of the first uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the first uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == filepath.Base(secondFile.Name()) {
 				if tstAssetContent != secondFileContent {
-					t.Fatalf("The contents of the second uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the second uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == filepath.Base(thirdFile.Name()) {
 				if tstAssetContent != thirdFileContent {
-					t.Fatalf("The contents of the third uploaded release asset don't match the original resource file's contents")
+					t.Fatalf("The contents of the third uploaded release asset " +
+						"don't match the original resource file's contents")
 				}
 			} else if tstAsset.GetName() == fourthAssetName {
 				if tstAssetContent != fourthAssetContent {
-					t.Fatalf("The contents of the fourth (non-uploaded) release asset don't match the original asset contents")
+					t.Fatalf("The contents of the fourth (non-uploaded) release " +
+						"asset don't match the original asset contents")
 				}
 			} else if tstAsset.GetName() == fifthAssetName {
 				if tstAssetContent != fifthAssetContent {
-					t.Fatalf("The contents of the fifth (non-uploaded) release asset don't match the original asset contents")
+					t.Fatalf("The contents of the fifth (non-uploaded) release " +
+						"asset don't match the original asset contents")
 				}
 			} else {
 				t.Fatalf("Found unidentified release asset: %+v", tstAsset)
@@ -756,7 +920,8 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 	binaryContent := "Binary content"
 	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the single "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(file.Name())
@@ -778,19 +943,26 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+		clientFactory := func(
+			gitHubToken string,
+			owner string,
+			repo string) Client {
+
+			info, err := collectBuildEventInfo(releaseSuffix, false)
 			if err != nil {
 				panic(err)
 			}
-			tstRelease := newTstRelease(releaseBody, info).(*TstRelease)
+			tstRelease := newTstRelease(releaseBody, info, false).(*TstRelease)
 			tstRelease.targetCommitish = oldCommit
 			tstRelease.tagName = tag
 			oldId = tstRelease.GetID()
@@ -800,8 +972,13 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 			return tstClient
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(clientFactory), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(clientFactory),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload the single binary: %v", err)
 		}
@@ -812,7 +989,9 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Detected wrong number of releases within client: want 1, have %d", len(tstClient.releases))
+			t.Fatalf(
+				"Detected wrong number of releases within client: want 1, have %d",
+				len(tstClient.releases))
 		}
 
 		release := tstClient.releases[0]
@@ -821,7 +1000,8 @@ func TestDeletionOfPreviousReleaseOnTargetCommitMismatch(t *testing.T) {
 		}
 
 		if release.GetID() == oldId {
-			t.Fatalf("Unexpected id of the resource, equal to the old id while expected the id to be new for new release")
+			t.Fatalf("Unexpected id of the resource, equal to the old id while " +
+				"expected the id to be new for new release")
 		}
 	}
 }
@@ -830,7 +1010,8 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 	binaryContent := "Binary content"
 	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the single "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(file.Name())
@@ -859,51 +1040,92 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			info, err := collectBuildEventInfo(releaseSuffix)
+		clientFactory := func(
+			gitHubToken string,
+			owner string,
+			repo string) Client {
+
+			info, err := collectBuildEventInfo(releaseSuffix, false)
 			if err != nil {
 				panic(err)
 			}
 
-			continuousMasterAsset := TstReleaseAsset{id: lastFreeReleaseAssetId, name: filepath.Base(file.Name()),
+			continuousMasterAsset := TstReleaseAsset{
+				id:      lastFreeReleaseAssetId,
+				name:    filepath.Base(file.Name()),
 				content: continuousMasterContent}
 			lastFreeReleaseAssetId++
 
-			continuousMasterRelease := newTstRelease(releaseBody, info).(*TstRelease)
+			continuousMasterRelease := newTstRelease(
+				releaseBody,
+				info,
+				false).(*TstRelease)
+
 			continuousMasterRelease.targetCommitish = continuousMasterCommit
 			continuousMasterRelease.tagName = continuousMasterTag
-			continuousMasterRelease.name = "Continuous release (" + continuousMasterTag + ")"
-			continuousMasterRelease.isPrerelease = true
-			continuousMasterRelease.assets = append(continuousMasterRelease.assets, continuousMasterAsset)
 
-			continuousDevAsset := TstReleaseAsset{id: lastFreeReleaseAssetId, name: filepath.Base(file.Name()),
+			continuousMasterRelease.name = "Continuous release (" +
+				continuousMasterTag + ")"
+
+			continuousMasterRelease.isPrerelease = true
+			continuousMasterRelease.assets = append(
+				continuousMasterRelease.assets,
+				continuousMasterAsset)
+
+			continuousDevAsset := TstReleaseAsset{
+				id:      lastFreeReleaseAssetId,
+				name:    filepath.Base(file.Name()),
 				content: continuousDevContent}
 			lastFreeReleaseAssetId++
 
-			continuousDevRelease := newTstRelease(releaseBody, info).(*TstRelease)
+			continuousDevRelease := newTstRelease(
+				releaseBody,
+				info,
+				false).(*TstRelease)
+
 			continuousDevRelease.targetCommitish = continuousDevCommit
 			continuousDevRelease.tagName = continuousDevTag
-			continuousDevRelease.name = "Continuous release (" + continuousDevTag + ")"
+
+			continuousDevRelease.name = "Continuous release (" +
+				continuousDevTag + ")"
+
 			continuousDevRelease.isPrerelease = true
-			continuousDevRelease.assets = append(continuousDevRelease.assets, continuousDevAsset)
+			continuousDevRelease.assets = append(
+				continuousDevRelease.assets,
+				continuousDevAsset)
 
 			tstClient := newTstClient(gitHubToken, owner, repo).(*TstClient)
-			tstClient.releases = append(tstClient.releases, *continuousMasterRelease)
-			tstClient.releases = append(tstClient.releases, *continuousDevRelease)
+
+			tstClient.releases = append(
+				tstClient.releases,
+				*continuousMasterRelease)
+
+			tstClient.releases = append(
+				tstClient.releases,
+				*continuousDevRelease)
+
 			tstClient.tagNames = append(tstClient.tagNames, continuousMasterTag)
 			tstClient.tagNames = append(tstClient.tagNames, continuousDevTag)
 			return tstClient
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(clientFactory), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(clientFactory),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload the single binary: %v", err)
 		}
@@ -914,7 +1136,9 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 		}
 
 		if len(tstClient.releases) != 3 {
-			t.Fatalf("Detected wrong number of releases within client: want 3, have %d", len(tstClient.releases))
+			t.Fatalf(
+				"Detected wrong number of releases within client: want 3, have %d",
+				len(tstClient.releases))
 		}
 
 		foundContinuousMasterRelease := false
@@ -924,7 +1148,10 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 			var release Release = &tstRelease
 			assets := release.GetAssets()
 			if len(assets) != 1 {
-				t.Fatalf("Wrong number of assets within the release: want %d, have %d", 1, len(assets))
+				t.Fatalf(
+					"Wrong number of assets within the release: want %d, have %d",
+					1,
+					len(assets))
 			}
 
 			asset := assets[0].(TstReleaseAsset)
@@ -932,49 +1159,64 @@ func TestNewReleaseBuildCreation(t *testing.T) {
 			if release.GetTagName() == continuousMasterTag {
 				foundContinuousMasterRelease = true
 				if asset.content != continuousMasterContent {
-					t.Fatalf("Detected wrong content for continuous master release after creating non-continuous release")
+					t.Fatalf("Detected wrong content for continuous master " +
+						"release after creating non-continuous release")
 				}
 			} else if release.GetTagName() == continuousDevTag {
 				foundContinuousDevRelease = true
 				if asset.GetContent() != continuousDevContent {
-					t.Fatalf("Detected wrong content for continuous dev release after creating non-continuous release")
+					t.Fatalf("Detected wrong content for continuous dev release " +
+						"after creating non-continuous release")
 				}
 			} else if release.GetTagName() == tag {
 				if release.GetPrerelease() {
-					t.Fatalf("The non-continuous tagged release is marked as prerelease which is not intended")
+					t.Fatalf("The non-continuous tagged release is marked as " +
+						"prerelease which is not intended")
 				} else if asset.GetContent() != binaryContent {
-					t.Fatalf("Detected wrong content for official release: want %q, have %q", binaryContent, asset.GetContent())
+					t.Fatalf("Detected wrong content for official release: want "+
+						"%q, have %q", binaryContent, asset.GetContent())
 				} else if release.GetTargetCommitish() != commit {
-					t.Fatalf("Detected wrong target commit to which the official release corresponds: want %q, have %q",
-						commit, release.GetTargetCommitish())
+					t.Fatalf(
+						"Detected wrong target commit to which the official "+
+							"release corresponds: want %q, have %q",
+						commit,
+						release.GetTargetCommitish())
 				}
 			}
 		}
 
 		if !foundContinuousMasterRelease {
-			t.Fatalf("Haven't found the continous master release after creating the official release")
+			t.Fatalf("Haven't found the continous master release after creating " +
+				"the official release")
 		}
 
 		if !foundContinuousDevRelease {
-			t.Fatalf("Haven't found the continous development release after creating the official release")
+			t.Fatalf("Haven't found the continous development release after " +
+				"creating the official release")
 		}
 	}
 }
 
 func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	travisBinaryContent := "Travis binary content"
-	travisFile, err := setupSampleAssetFile("travisUploadedBinary.txt", travisBinaryContent)
+	travisFile, err := setupSampleAssetFile(
+		"travisUploadedBinary.txt",
+		travisBinaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the binary uploaded from Travis CI: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the binary "+
+			"uploaded from Travis CI: %v", err)
 	}
 
 	defer os.Remove(travisFile.Name())
 	defer travisFile.Close()
 
 	appVeyorBinaryContent := "AppVeyor binary content"
-	appVeyorFile, err := setupSampleAssetFile("appVeyorUploadedBinary.txt", appVeyorBinaryContent)
+	appVeyorFile, err := setupSampleAssetFile(
+		"appVeyorUploadedBinary.txt",
+		appVeyorBinaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the binary uploaded from AppVeyor CI: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the binary "+
+			"uploaded from AppVeyor CI: %v", err)
 	}
 
 	defer os.Remove(appVeyorFile.Name())
@@ -996,15 +1238,22 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		clientFactory := func(gitHubToken string, owner string, repo string) Client {
-			_, err := collectBuildEventInfo(releaseSuffix)
+		clientFactory := func(
+			gitHubToken string,
+			owner string,
+			repo string) Client {
+
+			_, err := collectBuildEventInfo(releaseSuffix, false)
 			if err != nil {
 				panic(err)
 			}
@@ -1021,21 +1270,32 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 			file = appVeyorFile
 		}
 
-		_, err := uploadImpl(clientFactoryFunc(clientFactory), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		_, err := uploadImpl(
+			clientFactoryFunc(clientFactory),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload one of binaries: %v", err)
 		}
 	}
 
 	if len(client.releases) != 1 {
-		t.Fatalf("Wrong number of releases within the client: want %d, have %d", 1, len(client.releases))
+		t.Fatalf(
+			"Wrong number of releases within the client: want %d, have %d",
+			1,
+			len(client.releases))
 	}
 
 	release := client.releases[0]
 	assets := release.GetAssets()
 	if len(assets) != 2 {
-		t.Fatalf("Wrong number of assets within the release: want %d, have %d", 2, len(assets))
+		t.Fatalf(
+			"Wrong number of assets within the release: want %d, have %d",
+			2,
+			len(assets))
 	}
 
 	foundTravisResourceAsset := false
@@ -1050,11 +1310,13 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	}
 
 	if !foundTravisResourceAsset {
-		t.Fatalf("Failed to find the release asset corresponding to the binary uploaded from Travis CI build")
+		t.Fatalf("Failed to find the release asset corresponding to the binary " +
+			"uploaded from Travis CI build")
 	}
 
 	if !foundAppVeyorResourceAsset {
-		t.Fatalf("Failed to find the release asset corresponding to the binary uploaded from AppVeyor CI build")
+		t.Fatalf("Failed to find the release asset corresponding to the binary " +
+			"uploaded from AppVeyor CI build")
 	}
 
 	foundTravisCiBuildLogLine := false
@@ -1063,14 +1325,20 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	scanner := bufio.NewScanner(strings.NewReader(release.GetBody()))
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "Travis CI build log: https://travis-ci.org/"+owner+"/"+repo+"/builds/") {
+		if strings.HasPrefix(line, "Travis CI build log: "+
+			"https://travis-ci.org/"+owner+"/"+repo+"/builds/") {
+
 			if foundTravisCiBuildLogLine {
-				t.Fatalf("Found Travis CI build log more than once within the release body")
+				t.Fatalf("Found Travis CI build log more than once within " +
+					"the release body")
 			}
 			foundTravisCiBuildLogLine = true
-		} else if strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/project/"+owner+"/"+repo+"/build") {
+		} else if strings.HasPrefix(line, "AppVeyor CI build log: "+
+			"https://ci.appveyor.com/project/"+owner+"/"+repo+"/build") {
+
 			if foundAppVeyorCiBuildLogLine {
-				t.Fatalf("Found AppVeyor CI build log more than once within the release body")
+				t.Fatalf("Found AppVeyor CI build log more than once within " +
+					"the release body")
 			}
 			foundAppVeyorCiBuildLogLine = true
 		}
@@ -1085,11 +1353,14 @@ func TestReleaseAfterBothTravisAndAppVeyorBuildJobs(t *testing.T) {
 	}
 }
 
-func TestNewNonContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffix(t *testing.T) {
+func TestNewNonContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffix(
+	t *testing.T) {
+
 	binaryContent := "Binary content"
 	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the single "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(file.Name())
@@ -1109,15 +1380,23 @@ func TestNewNonContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffix(t
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(newTstClient),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload the single binary: %v", err)
 		}
@@ -1128,26 +1407,36 @@ func TestNewNonContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffix(t
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Wrong number of releases within the returned client, want %d, have %d",
-				1, len(tstClient.releases))
+			t.Fatalf(
+				"Wrong number of releases within the returned client, "+
+					"want %d, have %d",
+				1,
+				len(tstClient.releases))
 		}
 
 		release := tstClient.releases[0]
 		if release.GetTagName() != tag {
-			t.Fatalf("Wrong tag name within the release: want %q, have %q", tag, release.GetTagName())
+			t.Fatalf(
+				"Wrong tag name within the release: want %q, have %q",
+				tag,
+				release.GetTagName())
 		}
 
 		if release.GetPrerelease() {
-			t.Fatalf("The created release is prerelease while it was expected to be non-prerelease")
+			t.Fatalf("The created release is prerelease while it was expected " +
+				"to be non-prerelease")
 		}
 	}
 }
 
-func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWithoutTag(t *testing.T) {
+func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWithoutTag(
+	t *testing.T) {
+
 	binaryContent := "Binary content"
 	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the single "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(file.Name())
@@ -1167,15 +1456,23 @@ func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWitho
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(newTstClient),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload the single binary: %v", err)
 		}
@@ -1186,26 +1483,31 @@ func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWitho
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Wrong number of releases within the returned client, want %d, have %d",
-				1, len(tstClient.releases))
+			t.Fatalf("Wrong number of releases within the returned client, "+
+				"want %d, have %d", 1, len(tstClient.releases))
 		}
 
 		release := tstClient.releases[0]
 		if release.GetTagName() != "continuous" {
-			t.Fatalf("Wrong tag name within the release: want \"continuous\", have %q", release.GetTagName())
+			t.Fatalf("Wrong tag name within the release: want \"continuous\", "+
+				"have %q", release.GetTagName())
 		}
 
 		if !release.GetPrerelease() {
-			t.Fatalf("The created release is not prerelease while it was expected to be prerelease")
+			t.Fatalf("The created release is not prerelease while it was " +
+				"expected to be prerelease")
 		}
 	}
 }
 
-func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWithTag(t *testing.T) {
+func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWithTag(
+	t *testing.T) {
+
 	binaryContent := "Binary content"
 	file, err := setupSampleAssetFile("singleUploadedBinary.txt", binaryContent)
 	if err != nil {
-		t.Fatalf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		t.Fatalf("Failed to create the temporary file representing the single "+
+			"uploaded binary: %v", err)
 	}
 
 	defer os.Remove(file.Name())
@@ -1225,15 +1527,23 @@ func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWithT
 	for i := 0; i < 2; i++ {
 		if i == 0 {
 			setupTravisCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "Travis CI build log: https://travis-ci.org/d1vanov/ciuploadtool/builds/" + os.Getenv("TRAVIS_BUILD_ID") + "/"
+			releaseBody = "Travis CI build log: " +
+				"https://travis-ci.org/d1vanov/ciuploadtool/builds/" +
+				os.Getenv("TRAVIS_BUILD_ID") + "/"
 		} else {
 			setupAppVeyorCiEnvVars(commit, branch, tag, repoSlug, isPullRequest)
-			releaseBody = "AppVeyor CI build log: https://ci.appveyor.com/project/" + owner + "/" + repo + "/build/" +
-				os.Getenv("APPVEYOR_BUILD_VERSION")
+			releaseBody = "AppVeyor CI build log: " +
+				"https://ci.appveyor.com/project/" + owner + "/" + repo +
+				"/build/" + os.Getenv("APPVEYOR_BUILD_VERSION")
 		}
 
-		client, err := uploadImpl(clientFactoryFunc(newTstClient), releaseFactoryFunc(newTstRelease), []string{file.Name()},
-			releaseSuffix, releaseBody)
+		client, err := uploadImpl(
+			clientFactoryFunc(newTstClient),
+			releaseFactoryFunc(newTstRelease),
+			[]string{file.Name()},
+			releaseSuffix,
+			releaseBody,
+			false)
 		if err != nil {
 			t.Fatalf("Failed to upload the single binary: %v", err)
 		}
@@ -1244,17 +1554,21 @@ func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWithT
 		}
 
 		if len(tstClient.releases) != 1 {
-			t.Fatalf("Wrong number of releases within the returned client, want %d, have %d",
-				1, len(tstClient.releases))
+			t.Fatalf("Wrong number of releases within the returned client, "+
+				"want %d, have %d", 1, len(tstClient.releases))
 		}
 
 		release := tstClient.releases[0]
 		if release.GetTagName() != tag {
-			t.Fatalf("Wrong tag name within the release: want %q, have %q", tag, release.GetTagName())
+			t.Fatalf(
+				"Wrong tag name within the release: want %q, have %q",
+				tag,
+				release.GetTagName())
 		}
 
 		if !release.GetPrerelease() {
-			t.Fatalf("The created release is not prerelease while it was expected to be prerelease")
+			t.Fatalf("The created release is not prerelease while it was " +
+				"expected to be prerelease")
 		}
 	}
 }
@@ -1262,18 +1576,26 @@ func TestNewContinuousReleaseWithSingleUploadedBinaryWithoutSpecifiedSuffixWithT
 func setupSampleAssetFile(filename, content string) (*os.File, error) {
 	file, err := ioutil.TempFile("", "singleUploadedBinary.txt")
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create the temporary file representing the single uploaded binary: %v", err)
+		return nil, fmt.Errorf("Failed to create the temporary file "+
+			"representing the single uploaded binary: %v", err)
 	}
 
 	_, err = file.WriteString(content)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to write the sample content to the temporary file: %v", err)
+		return nil, fmt.Errorf("Failed to write the sample content to "+
+			"the temporary file: %v", err)
 	}
 
 	return file, nil
 }
 
-func setupTravisCiEnvVars(commit string, branch string, tag string, repoSlug string, isPullRequest bool) {
+func setupTravisCiEnvVars(
+	commit string,
+	branch string,
+	tag string,
+	repoSlug string,
+	isPullRequest bool) {
+
 	os.Unsetenv("APPVEYOR")
 	os.Setenv("TRAVIS", "true")
 	os.Setenv("GITHUB_TOKEN", "fake_token")
@@ -1289,7 +1611,13 @@ func setupTravisCiEnvVars(commit string, branch string, tag string, repoSlug str
 	}
 }
 
-func setupAppVeyorCiEnvVars(commit string, branch string, tag string, repoSlug string, isPullRequest bool) {
+func setupAppVeyorCiEnvVars(
+	commit string,
+	branch string,
+	tag string,
+	repoSlug string,
+	isPullRequest bool) {
+
 	os.Unsetenv("TRAVIS")
 	os.Setenv("APPVEYOR", "True")
 	os.Setenv("auth_token", "fake_token")

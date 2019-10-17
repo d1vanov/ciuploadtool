@@ -8,18 +8,40 @@ import (
 	"strings"
 )
 
-type clientFactoryFunc func(gitHubToken string, owner string, repo string) Client
+type clientFactoryFunc func(
+	gitHubToken string, owner string, repo string) Client
 
-type releaseFactoryFunc func(releaseBody string, info *buildEventInfo) Release
+type releaseFactoryFunc func(
+	releaseBody string,
+	info *buildEventInfo,
+	verbose bool) Release
 
-func Upload(filenames []string, releaseSuffix string, releaseBody string) error {
-	_, err := uploadImpl(clientFactoryFunc(newGitHubClient), newGitHubRelease, filenames, releaseSuffix, releaseBody)
+func Upload(
+	filenames []string,
+	releaseSuffix string,
+	releaseBody string,
+	verbose bool) error {
+
+	_, err := uploadImpl(
+		clientFactoryFunc(newGitHubClient),
+		newGitHubRelease,
+		filenames,
+		releaseSuffix,
+		releaseBody,
+		verbose)
 	return err
 }
 
-func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFunc, filenames []string, releaseSuffix string, releaseBody string) (Client, error) {
+func uploadImpl(
+	clientFactory clientFactoryFunc,
+	releaseFactory releaseFactoryFunc,
+	filenames []string,
+	releaseSuffix string,
+	releaseBody string,
+	verbose bool) (Client, error) {
+
 	// Collect the information about the current build event
-	info, err := collectBuildEventInfo(releaseSuffix)
+	info, err := collectBuildEventInfo(releaseSuffix, verbose)
 	if err != nil {
 		return nil, err
 	}
@@ -46,9 +68,18 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 
 	if releaseExists {
 		targetCommitish := release.GetTargetCommitish()
+		if verbose {
+			fmt.Println(
+				"Found existing release: target commitish = " + targetCommitish)
+		}
+
 		if len(targetCommitish) != 0 && info.commit != targetCommitish {
-			fmt.Printf("Found existing release but its commit SHA doesn't match the current one: %s vs %s\n", info.commit, targetCommitish)
-			fmt.Printf("Deleting the existing release to recreate it with the current commit SHA %s\n", info.commit)
+			fmt.Printf(
+				"Found existing release but its commit SHA doesn't "+
+					"match the current one: %s vs %s\n", info.commit, targetCommitish)
+			fmt.Printf(
+				"Deleting the existing release to recreate it with "+
+					"the current commit SHA %s\n", info.commit)
 
 			response, err = client.DeleteRelease(release.GetID())
 			response.CloseBody()
@@ -59,7 +90,8 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 			releaseExists = false
 
 			if info.isPrerelease {
-				fmt.Println("Since the existing release was pre-release one, need to also remove the tag corresponding to it")
+				fmt.Println("Since the existing release was pre-release one, " +
+					"need to also remove the tag corresponding to it")
 				response, err = client.DeleteTag(info.tag)
 				response.CloseBody()
 				if err != nil {
@@ -73,9 +105,11 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 
 	if !releaseExists {
 		fmt.Println("Creating new release")
-		release, response, err = client.CreateRelease(releaseFactory(releaseBody, info))
+		release, response, err = client.CreateRelease(
+			releaseFactory(releaseBody, info, verbose))
 	} else {
-		existingReleaseAssets, response, err = client.ListReleaseAssets(release.GetID())
+		existingReleaseAssets, response, err = client.ListReleaseAssets(
+			release.GetID())
 	}
 
 	response.CloseBody()
@@ -86,13 +120,15 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 	err = response.Check()
 	if err != nil {
 		if !releaseExists {
-			return client, fmt.Errorf("Bad response on attempt to create the new release: %v", err)
+			return client, fmt.Errorf(
+				"Bad response on attempt to create the new release: %v", err)
 		}
-		return client, fmt.Errorf("Bad response on attempt to list release assets: %v", err)
+		return client, fmt.Errorf(
+			"Bad response on attempt to list release assets: %v", err)
 	}
 
 	if releaseExists {
-		release = updateBuildLogWithinReleaseBody(release, info)
+		release = updateBuildLogWithinReleaseBody(release, info, verbose)
 		release, response, err = client.UpdateRelease(release)
 		response.CloseBody()
 		if err != nil {
@@ -122,6 +158,10 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 
 		if existingReleaseAssets != nil {
 			for i, existingReleaseAsset := range existingReleaseAssets {
+				if verbose {
+					fmt.Println("Examing release asset: " +
+						existingReleaseAsset.GetDescription())
+				}
 				if existingReleaseAsset.GetID() == 0 {
 					continue
 				}
@@ -129,8 +169,10 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 					continue
 				}
 				if existingReleaseAsset.GetName() == filepath.Base(filename) {
-					fmt.Printf("Found duplicate release asset %s, deleting it\n", existingReleaseAsset.GetName())
-					response, err = client.DeleteReleaseAsset(existingReleaseAsset.GetID())
+					fmt.Printf("Found duplicate release asset %s, deleting it\n",
+						existingReleaseAsset.GetName())
+					response, err = client.DeleteReleaseAsset(
+						existingReleaseAsset.GetID())
 					response.CloseBody()
 					if err != nil {
 						return client, err
@@ -138,17 +180,24 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 
 					err = response.Check()
 					if err != nil {
-						return client, fmt.Errorf("Bad response on attempt to delete the stale release asset: %v", err)
+						return client, fmt.Errorf(
+							"Bad response on attempt to delete the stale "+
+								"release asset: %v", err)
 					}
 
-					existingReleaseAssets = append(existingReleaseAssets[:i], existingReleaseAssets[i+1:]...)
+					existingReleaseAssets = append(
+						existingReleaseAssets[:i],
+						existingReleaseAssets[i+1:]...)
 				}
 			}
 		}
 
 		fmt.Printf("Trying to upload file: %s\n", filename)
 
-		asset, response, err := client.UploadReleaseAsset(release.GetID(), filepath.Base(filename), file)
+		asset, response, err := client.UploadReleaseAsset(
+			release.GetID(),
+			filepath.Base(filename),
+			file)
 		response.CloseBody()
 		if err != nil {
 			return client, err
@@ -156,7 +205,8 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 
 		err = response.Check()
 		if err != nil {
-			return client, fmt.Errorf("Bad response on attempt to upload release asset: %v", err)
+			return client, fmt.Errorf(
+				"Bad response on attempt to upload release asset: %v", err)
 		}
 
 		existingReleaseAssets = append(existingReleaseAssets, asset)
@@ -165,17 +215,29 @@ func uploadImpl(clientFactory clientFactoryFunc, releaseFactory releaseFactoryFu
 	return client, nil
 }
 
-func updateBuildLogWithinReleaseBody(release Release, info *buildEventInfo) Release {
+func updateBuildLogWithinReleaseBody(
+	release Release,
+	info *buildEventInfo,
+	verbose bool) Release {
+
 	existingBody := release.GetBody()
 	scanner := bufio.NewScanner(strings.NewReader(existingBody))
 	newBody := ""
 	foundCiLine := false
 	for scanner.Scan() {
 		line := scanner.Text()
-		if info.isTravisCi && strings.HasPrefix(line, "Travis CI build log: https://travis-ci.org/"+info.owner+"/"+info.repo+"/builds/") {
+		if info.isTravisCi && strings.HasPrefix(
+			line,
+			"Travis CI build log: https://travis-ci.org/"+info.owner+"/"+
+				info.repo+"/builds/") {
+
 			foundCiLine = true
 			line = ciBuildLogString(info)
-		} else if !info.isTravisCi && strings.HasPrefix(line, "AppVeyor CI build log: https://ci.appveyor.com/project/"+info.owner+"/"+info.repo+"/build") {
+		} else if !info.isTravisCi && strings.HasPrefix(
+			line,
+			"AppVeyor CI build log: https://ci.appveyor.com/project/"+
+				info.owner+"/"+info.repo+"/build") {
+
 			foundCiLine = true
 			line = ciBuildLogString(info)
 		}
@@ -184,6 +246,10 @@ func updateBuildLogWithinReleaseBody(release Release, info *buildEventInfo) Rele
 
 	if !foundCiLine {
 		newBody = newBody + ciBuildLogString(info) + "\n"
+	}
+
+	if verbose {
+		fmt.Println("Updated release log: " + newBody)
 	}
 
 	release.SetBody(newBody)
@@ -195,7 +261,9 @@ func ciBuildLogString(info *buildEventInfo) string {
 		return ""
 	}
 	if info.isTravisCi {
-		return "Travis CI build log: https://travis-ci.org/" + info.owner + "/" + info.repo + "/builds/" + info.buildId + "/"
+		return "Travis CI build log: https://travis-ci.org/" + info.owner +
+			"/" + info.repo + "/builds/" + info.buildId + "/"
 	}
-	return "AppVeyor CI build log: https://ci.appveyor.com/project/" + info.owner + "/" + info.repo + "/build/" + info.buildId
+	return "AppVeyor CI build log: https://ci.appveyor.com/project/" +
+		info.owner + "/" + info.repo + "/build/" + info.buildId
 }
