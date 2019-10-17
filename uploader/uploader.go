@@ -75,11 +75,11 @@ func uploadImpl(
 
 		if len(targetCommitish) != 0 && info.commit != targetCommitish {
 			fmt.Printf(
-				`Found existing release but its commit SHA doesn't ")
-				match the current one: %s vs %s\n`, info.commit, targetCommitish)
+				"Found existing release but its commit SHA doesn't "+
+					"match the current one: %s vs %s\n", info.commit, targetCommitish)
 			fmt.Printf(
-				`Deleting the existing release to recreate it with ")
-				the current commit SHA %s\n`, info.commit)
+				"Deleting the existing release to recreate it with "+
+					"the current commit SHA %s\n", info.commit)
 
 			response, err = client.DeleteRelease(release.GetID())
 			response.CloseBody()
@@ -90,9 +90,8 @@ func uploadImpl(
 			releaseExists = false
 
 			if info.isPrerelease {
-				fmt.Println(
-					`Since the existing release was pre-release one,
-					need to also remove the tag corresponding to it`)
+				fmt.Println("Since the existing release was pre-release one, " +
+					"need to also remove the tag corresponding to it")
 				response, err = client.DeleteTag(info.tag)
 				response.CloseBody()
 				if err != nil {
@@ -182,8 +181,8 @@ func uploadImpl(
 					err = response.Check()
 					if err != nil {
 						return client, fmt.Errorf(
-							`Bad response on attempt to delete the stale
-							release asset: %v`, err)
+							"Bad response on attempt to delete the stale "+
+								"release asset: %v", err)
 					}
 
 					existingReleaseAssets = append(

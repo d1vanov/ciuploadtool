@@ -241,8 +241,8 @@ func (client GitHubClient) UploadReleaseAsset(releaseId int64, assetName string,
 		&options,
 		assetFile)
 	if err != nil && strings.Contains(err.Error(), "Code:already_exists") {
-		fmt.Println(`Release asset attempted to be uploaded already exists,
-					trying to delete the duplicate and re-upload`)
+		fmt.Println("Release asset attempted to be uploaded already exists, " +
+			"trying to delete the duplicate and re-upload")
 		delResponse, err := client.client.Repositories.DeleteReleaseAsset(
 			client.ctx,
 			client.owner,
