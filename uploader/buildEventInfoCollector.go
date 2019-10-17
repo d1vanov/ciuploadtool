@@ -21,7 +21,10 @@ type buildEventInfo struct {
 	buildId       string
 }
 
-func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
+func collectBuildEventInfo(
+	releaseSuffix string,
+	verbose bool) (*buildEventInfo, error) {
+
 	// Check whether the app is run during Travis CI or AppVeyor CI build
 	appVeyorEnvVar := os.Getenv("APPVEYOR")
 	travisCiEnvVar := os.Getenv("TRAVIS")
@@ -76,6 +79,12 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 		info.isPullRequest = os.Getenv("TRAVIS_EVENT_TYPE") == "pull_request"
 	}
 
+	if verbose {
+		fmt.Println("Branch = " + info.branch + ", tag = " + info.tag +
+			", commit = " + info.commit + ", repo slug = " + repoSlug +
+			", build id = " + info.buildId)
+	}
+
 	if info.isPullRequest {
 		fmt.Println("Current build is the one triggered by a pull request, won't do anything")
 		return nil, nil
@@ -96,6 +105,10 @@ func collectBuildEventInfo(releaseSuffix string) (*buildEventInfo, error) {
 
 	info.owner = repoSlugSplitted[0]
 	info.repo = repoSlugSplitted[1]
+
+	if verbose {
+		fmt.Println("Repo = " + info.repo + ", owner = " + info.owner)
+	}
 
 	if len(info.tag) != 0 && !strings.HasPrefix(info.tag, "continuous") && (len(releaseSuffix) == 0 || releaseSuffix == info.tag) {
 		info.releaseTitle = "Release build (" + info.tag + ")"

@@ -43,4 +43,5 @@ type Response interface {
 type ReleaseAsset interface {
 	GetID() int64
 	GetName() string
+	GetDescription() string
 }
