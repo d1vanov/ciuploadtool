@@ -13,22 +13,21 @@ func main() {
 		&releaseSuffix,
 		"suffix",
 		"",
-		"Optional suffix for the names of created continuous releases")
+		"Optional suffix for names of created continuous releases")
 
 	var releaseBody string
 	flag.StringVar(
 		&releaseBody,
 		"relbody",
 		"",
-		"Optional content for the body of created releases")
+		"Optional content for body of created release")
 
 	var prepareOnly bool
 	flag.BoolVar(
 		&prepareOnly,
 		"preponly",
 		false,
-		"Specify this flag and no artifacts for uploading to prepare the release"+
-			"for binaries uploading")
+		"Specify this flag to only prepare the release but not upload binaries")
 
 	var verbose bool
 	flag.BoolVar(
