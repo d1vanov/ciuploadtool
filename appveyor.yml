@@ -6,7 +6,7 @@ branches:
     - development
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
-environment: 
+environment:
   auth_token:
     secure: bFPozfVngJ8Gonjmldc8N5leBx7PxwwYIqnK/bpSsPVUYqEYHafBBQRwrtdL+oc9
   matrix:
@@ -16,15 +16,12 @@ environment:
     - prepare_mode: NO
       platform: x64
 
-clone_folder: c:\gopath\src\github.com\d1vanov\ciuploadtool
+stack: go 1.13
+
+clone_folder: c:\ciuploadtool
 
 init:
-  - set GOPATH=c:\gopath
-  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
-
-install:
-  - go get golang.org/x/oauth2
-  - go get github.com/google/go-github/github
+  - set PATH=c:\go\bin;%PATH%
 
 build_script:
   - go build
