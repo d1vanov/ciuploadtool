@@ -1,10 +1,10 @@
 language: go
 
 go:
-  - 1.9.x
+  - 1.13.x
 
 sudo: required
-dist: trusty
+dist: xenial
 
 matrix:
     include:
@@ -16,6 +16,8 @@ branches:
         - master
         - development
         - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+env:
+  - GO111MODULE=on
 
 install:
   - |
@@ -25,8 +27,6 @@ install:
       brew update-reset
       brew install p7zip
     fi
-  - go get golang.org/x/oauth2
-  - go get github.com/google/go-github/github
 
 script:
   - go build
