@@ -3,7 +3,7 @@ ciuploadtool
 
 **Command line tool for uploading of binaries from Travis CI and AppVeyor CI builds to GitHub releases**
 
-Travis CI (Linux, OS X): [![Build Status](https://travis-ci.org/d1vanov/ciuploadtool.svg?branch=master)](https://travis-ci.org/d1vanov/ciuploadtool)
+Travis CI (Linux, OS X): [![Build Status](https://api.travis-ci.com/d1vanov/ciuploadtool.svg?branch=master)](https://travis-ci.com/d1vanov/ciuploadtool)
 
 AppVeyor CI (Windows): [![Build status](https://ci.appveyor.com/api/projects/status/rsid6nlpmj2fq5ux/branch/master?svg=true)](https://ci.appveyor.com/project/d1vanov/ciuploadtool/branch/master)
 
