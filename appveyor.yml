@@ -16,7 +16,7 @@ environment:
     - prepare_mode: NO
       platform: x64
 
-stack: go 1.13
+stack: go 1.20
 
 clone_folder: c:\ciuploadtool
 
